@@ -1,10 +1,10 @@
 use bevy::{prelude::*, transform::commands};
-use concurrent_queue::{ConcurrentQueue, ForcePushError, PopError, PushError};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, startup);
+        .add_systems(Startup, startup)
+        .run();
 }
 
 fn startup(
@@ -13,7 +13,7 @@ fn startup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Circle::new(radius)),
+        mesh: meshes.add(Circle::new(0.5)),
         material: materials.add(Color::WHITE),
         transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ..default()
@@ -38,5 +38,5 @@ fn startup(
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
-    })
+    });
 }
