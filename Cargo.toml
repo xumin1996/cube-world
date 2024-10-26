@@ -5,5 +5,9 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.14"
+<<<<<<< HEAD
 noise = "0.8.1"
 avian3d = "0.1"
+=======
+noise = "0.9"
+>>>>>>> 640ae318345c14346e486f9524b20f73f478039b
