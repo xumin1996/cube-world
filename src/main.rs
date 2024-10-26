@@ -1,8 +1,10 @@
-use bevy::{prelude::*, transform::commands};
+use avian3d::prelude::*;
+use bevy::prelude::*;
+use noise::{NoiseFn, Perlin};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, PhysicsPlugins::default()))
         .add_systems(Startup, startup)
         .run();
 }
@@ -12,19 +14,36 @@ fn startup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Circle::new(0.5)),
-        material: materials.add(Color::WHITE),
-        transform: Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-        ..default()
-    });
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-        material: materials.add(Color::WHITE),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
-    });
+    // 地形
+    let perlin = Perlin::new(1);
+    for x in 1..10 {
+        for z in 1..10 {
+            let height = perlin.get([x as f64 / 10.0, z as f64 / 10.0]);
+            commands.spawn((
+                RigidBody::Static,
+                Collider::cuboid(1.0, 1.0, 1.0),
+                PbrBundle {
+                    mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+                    material: materials.add(Color::WHITE),
+                    transform: Transform::from_xyz(x as f32, height as f32 * 2.0f32, z as f32),
+                    ..default()
+                },
+            ));
+        }
+    }
+
+    // 角色
+    commands.spawn((
+        RigidBody::Dynamic,
+        Collider::cuboid(0.2, 0.2, 0.2),
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(0.2, 0.2, 0.2)),
+            material: materials.add(Color::WHITE),
+            transform: Transform::from_xyz(5.0, 10.0, 5.0),
+            ..default()
+        },
+    ));
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
@@ -36,7 +55,8 @@ fn startup(
     });
 
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(-2.5, 4.5, 9.0)
+            .looking_at(Vec3::new(5.0, 0.0, 5.0), Vec3::Y),
         ..default()
     });
 }
