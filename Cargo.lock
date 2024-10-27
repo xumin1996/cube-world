@@ -341,6 +341,7 @@ dependencies = [
  "avian3d",
  "bevy",
  "noise",
+ "smooth-bevy-cameras",
 ]
 
 [[package]]
@@ -3557,6 +3558,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "smooth-bevy-cameras"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "822db04623867d82261bd51b2d8fdd91f3ce062ba89f8c7c11255e844d6fc00f"
+dependencies = [
+ "approx",
+ "bevy",
 ]
 
 [[package]]
