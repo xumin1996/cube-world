@@ -1,10 +1,9 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
+use bevy_tnua::prelude::*;
+use bevy_tnua_avian3d::TnuaAvian3dPlugin;
 use noise::{NoiseFn, Perlin};
 use smooth_bevy_cameras::{LookTransform, LookTransformBundle, LookTransformPlugin, Smoother};
-use bevy_tnua_avian3d::TnuaAvian3dPlugin;
-use bevy_tnua::prelude::*;
-
 
 fn main() {
     App::new()
@@ -13,10 +12,10 @@ fn main() {
             PhysicsPlugins::default(),
             LookTransformPlugin,
             TnuaControllerPlugin::default(),
-            TnuaAvian3dPlugin::default()
+            TnuaAvian3dPlugin::default(),
         ))
         .add_systems(Startup, startup)
-        .add_systems(Update, (move_camera_system, player_controller))
+        .add_systems(Update, (move_camera_system, apply_controls))
         .run();
 }
 
@@ -30,8 +29,8 @@ fn startup(
 ) {
     // 地形
     let perlin = Perlin::new(1);
-    for x in 1..10 {
-        for z in 1..10 {
+    for x in 1..15 {
+        for z in 1..15 {
             let height = perlin.get([x as f64 / 10.0, z as f64 / 10.0]);
             commands.spawn((
                 RigidBody::Static,
@@ -47,18 +46,19 @@ fn startup(
     }
 
     // 角色
-    commands.spawn((
-        TnuaControllerBundle::default(),
-        RigidBody::Dynamic,
-        Collider::cuboid(0.2, 0.2, 0.2),
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(0.2, 0.2, 0.2)),
-            material: materials.add(Color::WHITE),
-            transform: Transform::from_xyz(5.0, 100.0, 5.0),
-            ..default()
-        },
-    ))
-    .insert(Player);
+    commands
+        .spawn((
+            TnuaControllerBundle::default(),
+            RigidBody::Dynamic,
+            Collider::cuboid(0.2, 0.2, 0.2),
+            PbrBundle {
+                mesh: meshes.add(Cuboid::new(0.2, 0.2, 0.2)),
+                material: materials.add(Color::WHITE),
+                transform: Transform::from_xyz(5.0, 5.0, 5.0),
+                ..default()
+            },
+        ))
+        .insert(Player);
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
@@ -85,25 +85,53 @@ fn startup(
         .insert(Camera3dBundle::default());
 }
 
-fn move_camera_system(mut cameras: Query<&mut LookTransform>, player_transform: Query<&mut Transform, With<Player>>) {
+fn move_camera_system(
+    mut cameras: Query<&mut LookTransform>,
+    player_transform: Query<&mut Transform, With<Player>>,
+) {
     for mut camera in cameras.iter_mut() {
         camera.target = player_transform.single().translation;
     }
 }
 
-fn player_controller(mut tnue_controller: Query<&mut TnuaController>) {
- for mut controller in tnue_controller.iter_mut() {
-    controller.basis(
-        TnuaBuiltinWalk{
-            float_height: 5.0,
-            ..default()
-        }
-    );
-    controller.action(
-        TnuaBuiltinJump{
-            height: 10.0,
-            ..default()
-        }
-    );
- }
+
+fn apply_controls(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut TnuaController>) {
+    let Ok(mut controller) = query.get_single_mut() else {
+        return;
+    };
+    let mut direction = Vec3::ZERO;
+
+    if keyboard.pressed(KeyCode::KeyW) {
+        direction -= Vec3::Z;
+    }
+    if keyboard.pressed(KeyCode::KeyS) {
+        direction += Vec3::Z;
+    }
+    if keyboard.pressed(KeyCode::KeyA) {
+        direction -= Vec3::X;
+    }
+    if keyboard.pressed(KeyCode::KeyD) {
+        direction += Vec3::X;
+    }
+    controller.basis(TnuaBuiltinWalk {
+        // The `desired_velocity` determines how the character will move.
+        desired_velocity: direction.normalize_or_zero() * 10.0,
+        // The `float_height` must be greater (even if by little) from the distance between the
+        // character's center and the lowest point of its collider.
+        float_height: 1.0,
+        // `TnuaBuiltinWalk` has many other fields for customizing the movement - but they have
+        // sensible defaults. Refer to the `TnuaBuiltinWalk`'s documentation to learn what they do.
+        ..Default::default()
+    });
+
+    // Feed the jump action every frame as long as the player holds the jump button. If the player
+    // stops holding the jump button, simply stop feeding the action.
+    if keyboard.pressed(KeyCode::Space) {
+        controller.action(TnuaBuiltinJump {
+            // The height is the only mandatory field of the jump button.
+            height: 1.5,
+            // `TnuaBuiltinJump` also has customization fields with sensible defaults.
+            ..Default::default()
+        });
+    }
 }
