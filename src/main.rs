@@ -1,7 +1,10 @@
 use avian3d::prelude::*;
-use bevy::{prelude::*, render::camera};
+use bevy::prelude::*;
 use noise::{NoiseFn, Perlin};
 use smooth_bevy_cameras::{LookTransform, LookTransformBundle, LookTransformPlugin, Smoother};
+use bevy_tnua_avian3d::TnuaAvian3dPlugin;
+use bevy_tnua::prelude::*;
+
 
 fn main() {
     App::new()
@@ -9,9 +12,11 @@ fn main() {
             DefaultPlugins,
             PhysicsPlugins::default(),
             LookTransformPlugin,
+            TnuaControllerPlugin::default(),
+            TnuaAvian3dPlugin::default()
         ))
         .add_systems(Startup, startup)
-        .add_systems(Update, move_camera_system)
+        .add_systems(Update, (move_camera_system, player_controller))
         .run();
 }
 
@@ -43,12 +48,13 @@ fn startup(
 
     // 角色
     commands.spawn((
+        TnuaControllerBundle::default(),
         RigidBody::Dynamic,
         Collider::cuboid(0.2, 0.2, 0.2),
         PbrBundle {
             mesh: meshes.add(Cuboid::new(0.2, 0.2, 0.2)),
             material: materials.add(Color::WHITE),
-            transform: Transform::from_xyz(5.0, 200.0, 5.0),
+            transform: Transform::from_xyz(5.0, 100.0, 5.0),
             ..default()
         },
     ))
@@ -83,4 +89,21 @@ fn move_camera_system(mut cameras: Query<&mut LookTransform>, player_transform: 
     for mut camera in cameras.iter_mut() {
         camera.target = player_transform.single().translation;
     }
+}
+
+fn player_controller(mut tnue_controller: Query<&mut TnuaController>) {
+ for mut controller in tnue_controller.iter_mut() {
+    controller.basis(
+        TnuaBuiltinWalk{
+            float_height: 5.0,
+            ..default()
+        }
+    );
+    controller.action(
+        TnuaBuiltinJump{
+            height: 10.0,
+            ..default()
+        }
+    );
+ }
 }
