@@ -22,6 +22,12 @@ fn main() {
 #[derive(Component)]
 struct Player;
 
+#[derive(Resource)]
+struct CamereLookAt {
+    look_at: Vec3,
+    look_at_rotate: Vec3
+}
+
 fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -83,6 +89,11 @@ fn startup(
             smoother: Smoother::new(0.9),
         })
         .insert(Camera3dBundle::default());
+
+    commands.insert_resource(CamereLookAt{
+        look_at: Vec3::Z * 5.0,
+        look_at_rotate: Vec3::X
+    });
 }
 
 fn move_camera_system(
@@ -94,44 +105,52 @@ fn move_camera_system(
     }
 }
 
-
-fn apply_controls(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut TnuaController>) {
+fn apply_controls(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    camera_look_at: Res<CamereLookAt>,
+    mut query: Query<&mut TnuaController>,
+    mut player_position_query: Query<&mut Transform, With<Player>>,
+    mut lookTransformQuery: Query<&mut LookTransform>,
+) {
     let Ok(mut controller) = query.get_single_mut() else {
         return;
     };
+
+    let look_direction = camera_look_at.look_at.normalize();
+    let rotation_quaternion = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
+    let look_direction_rotation = rotation_quaternion.mul_vec3(look_direction);
+
     let mut direction = Vec3::ZERO;
 
     if keyboard.pressed(KeyCode::KeyW) {
-        direction -= Vec3::Z;
+        direction += look_direction;
     }
     if keyboard.pressed(KeyCode::KeyS) {
-        direction += Vec3::Z;
+        direction -= look_direction;
     }
     if keyboard.pressed(KeyCode::KeyA) {
-        direction -= Vec3::X;
+        direction -= look_direction_rotation;
     }
     if keyboard.pressed(KeyCode::KeyD) {
-        direction += Vec3::X;
+        direction += look_direction_rotation;
     }
     controller.basis(TnuaBuiltinWalk {
-        // The `desired_velocity` determines how the character will move.
-        desired_velocity: direction.normalize_or_zero() * 10.0,
-        // The `float_height` must be greater (even if by little) from the distance between the
-        // character's center and the lowest point of its collider.
+        desired_velocity: direction.normalize_or_zero() * 7.0,
         float_height: 1.0,
-        // `TnuaBuiltinWalk` has many other fields for customizing the movement - but they have
-        // sensible defaults. Refer to the `TnuaBuiltinWalk`'s documentation to learn what they do.
         ..Default::default()
     });
 
-    // Feed the jump action every frame as long as the player holds the jump button. If the player
-    // stops holding the jump button, simply stop feeding the action.
     if keyboard.pressed(KeyCode::Space) {
         controller.action(TnuaBuiltinJump {
-            // The height is the only mandatory field of the jump button.
             height: 1.5,
-            // `TnuaBuiltinJump` also has customization fields with sensible defaults.
             ..Default::default()
         });
     }
+
+    // 更新摄像机位置
+    let Ok(mut lt) = lookTransformQuery.get_single_mut() else {
+        return;
+    };
+    let player_position: &Transform = player_position_query.get_single().unwrap();
+    lt.eye = player_position.translation - camera_look_at.look_at;
 }
