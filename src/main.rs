@@ -1,4 +1,4 @@
-use avian3d::prelude::*;
+use avian3d::{parry::shape, prelude::*};
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
 use bevy_tnua_avian3d::TnuaAvian3dPlugin;
@@ -24,8 +24,7 @@ struct Player;
 
 #[derive(Resource)]
 struct CamereLookAt {
-    look_at: Vec3,
-    look_at_rotate: Vec3
+    look_at: Vec3
 }
 
 fn startup(
@@ -34,6 +33,9 @@ fn startup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // 地形
+    let cube_mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
+    let cube_material = materials.add(Color::WHITE);
+    
     let perlin = Perlin::new(1);
     for x in 1..15 {
         for z in 1..15 {
@@ -42,8 +44,8 @@ fn startup(
                 RigidBody::Static,
                 Collider::cuboid(1.0, 1.0, 1.0),
                 PbrBundle {
-                    mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-                    material: materials.add(Color::WHITE),
+                    mesh: cube_mesh.clone(),
+                    material: cube_material.clone(),
                     transform: Transform::from_xyz(x as f32, height as f32 * 2.0f32, z as f32),
                     ..default()
                 },
