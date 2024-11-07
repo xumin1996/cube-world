@@ -91,8 +91,7 @@ fn startup(
         .insert(Camera3dBundle::default());
 
     commands.insert_resource(CamereLookAt{
-        look_at: Vec3::Z * 5.0,
-        look_at_rotate: Vec3::X
+        look_at: Vec3::Z * 5.0
     });
 }
 
