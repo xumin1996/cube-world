@@ -1,4 +1,5 @@
 use avian3d::{parry::shape, prelude::*};
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
 use bevy_tnua_avian3d::TnuaAvian3dPlugin;
@@ -13,6 +14,8 @@ fn main() {
             LookTransformPlugin,
             TnuaControllerPlugin::default(),
             TnuaAvian3dPlugin::default(),
+            FrameTimeDiagnosticsPlugin,
+            LogDiagnosticsPlugin::default(),
         ))
         .add_systems(Startup, startup)
         .add_systems(Update, (move_camera_system, apply_controls))
@@ -24,7 +27,7 @@ struct Player;
 
 #[derive(Resource)]
 struct CamereLookAt {
-    look_at: Vec3
+    look_at: Vec3,
 }
 
 fn startup(
@@ -35,23 +38,31 @@ fn startup(
     // 地形
     let cube_mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
     let cube_material = materials.add(Color::WHITE);
-    
+
     let perlin = Perlin::new(1);
-    for x in 1..15 {
-        for z in 1..15 {
+    for x in 1..400 {
+        for z in 1..400 {
             let height = perlin.get([x as f64 / 10.0, z as f64 / 10.0]);
-            commands.spawn((
-                RigidBody::Static,
-                Collider::cuboid(1.0, 1.0, 1.0),
-                PbrBundle {
-                    mesh: cube_mesh.clone(),
-                    material: cube_material.clone(),
-                    transform: Transform::from_xyz(x as f32, height as f32 * 2.0f32, z as f32),
-                    ..default()
-                },
-            ));
+            commands.spawn(PbrBundle {
+                mesh: cube_mesh.clone(),
+                material: cube_material.clone(),
+                transform: Transform::from_xyz(x as f32, height as f32 * 2.0f32, z as f32),
+                ..default()
+            });
         }
     }
+
+    // 地板
+    commands.spawn((
+        RigidBody::Static,
+        Collider::cuboid(100.0, 1.0, 100.0),
+        PbrBundle {
+            mesh: cube_mesh.clone(),
+            material: cube_material.clone(),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            ..default()
+        },
+    ));
 
     // 角色
     commands
@@ -92,8 +103,8 @@ fn startup(
         })
         .insert(Camera3dBundle::default());
 
-    commands.insert_resource(CamereLookAt{
-        look_at: Vec3::Z * 5.0
+    commands.insert_resource(CamereLookAt {
+        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(5.0, 3.0, 5.0),
     });
 }
 
