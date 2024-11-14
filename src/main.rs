@@ -1,5 +1,7 @@
 use avian3d::{parry::shape, prelude::*};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::input::mouse::MouseMotion;
+use bevy::math::VectorSpace;
 use bevy::prelude::*;
 use bevy::render::{
     mesh::{Indices, VertexAttributeValues},
@@ -23,7 +25,7 @@ fn main() {
             LogDiagnosticsPlugin::default(),
         ))
         .add_systems(Startup, startup)
-        .add_systems(Update, (move_camera_system, apply_controls))
+        .add_systems(Update, (apply_controls, handle_mouse_motion))
         .run();
 }
 
@@ -118,15 +120,6 @@ fn startup(
     });
 }
 
-fn move_camera_system(
-    mut cameras: Query<&mut LookTransform>,
-    player_transform: Query<&mut Transform, With<Player>>,
-) {
-    for mut camera in cameras.iter_mut() {
-        camera.target = player_transform.single().translation;
-    }
-}
-
 fn apply_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CamereLookAt>,
@@ -175,6 +168,7 @@ fn apply_controls(
     };
     let player_position: &Transform = player_position_query.get_single().unwrap();
     lt.eye = player_position.translation - camera_look_at.look_at;
+    lt.target = player_position.translation;
 }
 
 fn create_cube_mesh(cube_positions: Vec<Transform>) -> Mesh {
@@ -332,4 +326,18 @@ fn create_cube_mesh(cube_positions: Vec<Transform>) -> Mesh {
     // Read more about how to correctly build a mesh manually in the Bevy documentation of a Mesh,
     // further examples and the implementation of the built-in shapes.
     .with_inserted_indices(Indices::U32(indices))
+}
+
+fn handle_mouse_motion(
+    mut mouse_motion_events: EventReader<MouseMotion>,
+    mut camera_transform: Query<&mut Transform, With<Camera>>,
+    mut camera_look_at: Res<CamereLookAt>,
+) {
+    let displacement = mouse_motion_events
+        .read()
+        .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
+    println!("Mouse moved {}", displacement);
+    camera_transform
+        .single_mut()
+        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-delta.x / 1.));
 }
