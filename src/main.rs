@@ -330,14 +330,12 @@ fn create_cube_mesh(cube_positions: Vec<Transform>) -> Mesh {
 
 fn handle_mouse_motion(
     mut mouse_motion_events: EventReader<MouseMotion>,
-    mut camera_transform: Query<&mut Transform, With<Camera>>,
     mut camera_look_at: Res<CamereLookAt>,
 ) {
     let displacement = mouse_motion_events
         .read()
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
     println!("Mouse moved {}", displacement);
-    camera_transform
-        .single_mut()
-        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-delta.x / 1.));
+    Transform::from_translation(camera_look_at.look_at)
+        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 75.));
 }
