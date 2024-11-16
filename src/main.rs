@@ -120,6 +120,25 @@ fn startup(
     });
 }
 
+fn handle_mouse_motion(
+    mut mouse_motion_events: EventReader<MouseMotion>,
+    mut camera_look_at: ResMut<CamereLookAt>,
+) {
+    let displacement = mouse_motion_events
+        .read()
+        .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
+    println!("Mouse moved {}", displacement);
+
+    // 旋转
+    let mut camera_transform = Transform::from_translation(camera_look_at.look_at);
+    camera_transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 500.));
+    camera_look_at.look_at = Vec3::new(
+        camera_transform.translation.x,
+        camera_transform.translation.y,
+        camera_transform.translation.z,
+    );
+}
+
 fn apply_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CamereLookAt>,
@@ -326,20 +345,4 @@ fn create_cube_mesh(cube_positions: Vec<Transform>) -> Mesh {
     // Read more about how to correctly build a mesh manually in the Bevy documentation of a Mesh,
     // further examples and the implementation of the built-in shapes.
     .with_inserted_indices(Indices::U32(indices))
-}
-
-fn handle_mouse_motion(
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut camera_look_at: ResMut<CamereLookAt>,
-) {
-    let displacement = mouse_motion_events
-        .read()
-        .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
-    println!("Mouse moved {}", displacement);
-    
-    // 旋转
-    let mut camera_transform = Transform::from_translation(camera_look_at.look_at);
-    camera_transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 500.));
-    camera_look_at.look_at = Vec3::new(camera_transform.translation.x, camera_transform.translation.y, camera_transform.translation.z);
-
 }
