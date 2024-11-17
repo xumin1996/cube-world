@@ -46,6 +46,8 @@ fn startup(
     // let cube_mesh = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
     let cube_material = materials.add(Color::WHITE);
     let mut cube_positions: Vec<Transform> = Vec::new();
+    let mut collider_cube_positions: Vec<Transform> = Vec::new();
+    let region_number: i32 = 16;
 
     let perlin = Perlin::new(1);
     for x in 1..1000 {
@@ -56,11 +58,11 @@ fn startup(
                 height as f32 * 2.0f32,
                 z as f32,
             ));
-            if (x < 10 && z < 10) {
-                commands.spawn((
-                    RigidBody::Static,
-                    Collider::cuboid(1.0, 1.0, 1.0),
-                    Transform::from_xyz(x as f32, height as f32 * 2.0f32, z as f32),
+            if (x < region_number * 16 && z < region_number * 16) {
+                collider_cube_positions.push(Transform::from_xyz(
+                    x as f32,
+                    height as f32 * 2.0f32,
+                    z as f32,
                 ));
             }
         }
@@ -73,24 +75,31 @@ fn startup(
         ..default()
     });
 
+    // 地形
+    let collider_cube_mesh = create_cube_mesh(collider_cube_positions);
+    commands.spawn((
+        RigidBody::Static,
+        Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
+    ));
+
     // 地板
     // commands.spawn((RigidBody::Static, Collider::cuboid(2000.0, 1.0, 2000.0)));
 
     // 角色
-    commands
-        .spawn((
-            TnuaControllerBundle::default(),
-            RigidBody::Dynamic,
-            Collider::cuboid(0.2, 0.2, 0.2),
-            PbrBundle {
-                mesh: meshes.add(Cuboid::new(0.2, 0.2, 0.2)),
-                material: materials.add(Color::WHITE),
-                transform: Transform::from_xyz(5.0, 5.0, 5.0),
-                ..default()
-            },
-        ))
-        .insert(Player);
+    commands.spawn((
+        TnuaControllerBundle::default(),
+        RigidBody::Dynamic,
+        Collider::cuboid(0.2, 0.2, 0.2),
+        PbrBundle {
+            mesh: meshes.add(Cuboid::new(0.8, 0.8, 0.8)),
+            material: materials.add(Color::WHITE),
+            transform: Transform::from_xyz(5.0, 15.0, 5.0),
+            ..default()
+        },
+        Player,
+    ));
 
+    // 点光源
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             shadows_enabled: true,
@@ -116,9 +125,11 @@ fn startup(
         .insert(Camera3dBundle::default());
 
     commands.insert_resource(CamereLookAt {
-        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(5.0, 3.0, 5.0),
+        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(10.0, 6.0, 10.0),
     });
 }
+
+fn map_rigid_body(mut commands: Commands, mut maps: Query<&mut TnuaController>) {}
 
 fn handle_mouse_motion(
     mut mouse_motion_events: EventReader<MouseMotion>,
@@ -127,7 +138,6 @@ fn handle_mouse_motion(
     let displacement = mouse_motion_events
         .read()
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
-    println!("Mouse moved {}", displacement);
 
     // 旋转
     let mut camera_transform = Transform::from_translation(camera_look_at.look_at);
@@ -169,8 +179,8 @@ fn apply_controls(
         direction += look_direction_rotation;
     }
     controller.basis(TnuaBuiltinWalk {
-        desired_velocity: direction.normalize_or_zero() * 7.0,
-        float_height: 1.0,
+        desired_velocity: direction.normalize_or_zero() * 15.0,
+        float_height: 1.5,
         ..Default::default()
     });
 
