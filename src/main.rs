@@ -25,6 +25,8 @@ fn main() {
             (
                 player::handle_keyboard_controls,
                 player::handle_mouse_motion,
+                player::handle_camera,
+                player::handle_light,
                 region::region_update,
             ),
         )

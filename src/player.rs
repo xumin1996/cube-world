@@ -78,8 +78,6 @@ pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
     mut query: Query<&mut TnuaController>,
-    mut player_position_query: Query<&mut Transform, With<Player>>,
-    mut lookTransformQuery: Query<&mut LookTransform>,
 ) {
     let Ok(mut controller) = query.get_single_mut() else {
         return;
@@ -115,26 +113,31 @@ pub fn handle_keyboard_controls(
             ..Default::default()
         });
     }
-
-    // 更新摄像机位置
-    let Ok(mut lt) = lookTransformQuery.get_single_mut() else {
-        return;
-    };
-    let player_position: &Transform = player_position_query.get_single().unwrap();
-    lt.eye = player_position.translation - camera_look_at.look_at;
-    lt.target = player_position.translation;
 }
 
 pub fn handle_camera(
     camera_look_at: Res<CameraLookAt>,
-    mut player_position_query: Query<&mut Transform, With<Player>>,
+    player_position_query: Query<&Transform, With<Player>>,
     mut lookTransformQuery: Query<&mut LookTransform>,
 ) {
     // 更新摄像机位置
     let Ok(mut lt) = lookTransformQuery.get_single_mut() else {
         return;
     };
-    let player_position: &Transform = player_position_query.get_single().unwrap();
+    let player_position: &Transform = player_position_query.single();
     lt.eye = player_position.translation - camera_look_at.look_at;
     lt.target = player_position.translation;
+}
+
+pub fn handle_light(
+    player_position_query: Query<&Transform, With<Player>>,
+    mut point_light_transform: Query<&mut Transform, (With<PointLight>, Without<Player>)>,
+) {
+    let player_position: &Transform = player_position_query.single();
+    // 更新光源
+    point_light_transform.single_mut().translation = Vec3::new(
+        player_position.translation.x,
+        player_position.translation.y + 5f32,
+        player_position.translation.z,
+    );
 }
