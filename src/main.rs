@@ -3,7 +3,7 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
 use bevy_tnua_avian3d::TnuaAvian3dPlugin;
-use smooth_bevy_cameras::{LookTransformPlugin};
+use smooth_bevy_cameras::LookTransformPlugin;
 
 pub mod player;
 pub mod region;
@@ -19,7 +19,7 @@ fn main() {
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
         ))
-        .add_systems(Startup, (player::setup))
+        .add_systems(Startup, (player::setup, region::startup))
         .add_systems(
             Update,
             (

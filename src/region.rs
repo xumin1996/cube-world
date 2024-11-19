@@ -11,18 +11,97 @@ use bevy::render::{
 use bevy::{ecs::entity, prelude::*};
 use noise::{NoiseFn, Perlin};
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct ViewRegion {
     block_x: i32,
     block_y: i32,
     block_z: i32,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct RigidRegion {
     block_x: i32,
     block_y: i32,
     block_z: i32,
+}
+
+pub fn startup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let perlin = Perlin::new(1);
+    // 角色所在区块
+    let player_region_x = 0i32;
+    let player_region_y = 0i32;
+    let player_region_z = 0i32;
+    println!(
+        "player region, x {}, y:{}, z: {}",
+        player_region_x, player_region_y, player_region_z
+    );
+
+    // view地形 默认加载周围25(5*5)个区块
+    let cube_material = materials.add(Color::WHITE);
+    for region_x in player_region_x - 2..=player_region_x + 2 {
+        for region_z in player_region_z - 2..=player_region_z + 2 {
+            println!("setup add view x: {}, z: {}", region_x, region_z);
+            let mut cube_positions: Vec<Transform> = Vec::new();
+            for region_block_x in 0..16 {
+                for region_block_z in 0..16 {
+                    let block_x = region_x * 16 + region_block_x;
+                    let block_z = region_z * 16 + region_block_z;
+                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                    cube_positions.push(Transform::from_xyz(
+                        block_x as f32,
+                        height as f32 * 2.0f32,
+                        block_z as f32,
+                    ));
+                }
+            }
+            commands.spawn((
+                ViewRegion {
+                    block_x: region_x,
+                    block_y: 0,
+                    block_z: region_z,
+                },
+                PbrBundle {
+                    mesh: meshes.add(create_cube_mesh(&cube_positions)),
+                    material: cube_material.clone(),
+                    ..default()
+                },
+            ));
+        }
+    }
+
+    // rigid地形 加载周围9(3*3)个区块
+    for region_x in player_region_x - 1..=player_region_x + 1 {
+        for region_z in player_region_z - 1..=player_region_z + 1 {
+            println!("setup add rigid x: {}, z: {}", region_x, region_z);
+            let mut collider_cube_positions: Vec<Transform> = Vec::new();
+            for region_block_x in 0..16 {
+                for region_block_z in 0..16 {
+                    let block_x = region_x * 16 + region_block_x;
+                    let block_z = region_z * 16 + region_block_z;
+                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                    collider_cube_positions.push(Transform::from_xyz(
+                        block_x as f32,
+                        height as f32 * 2.0f32,
+                        block_z as f32,
+                    ));
+                }
+            }
+            let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
+            commands.spawn((
+                RigidRegion {
+                    block_x: region_x,
+                    block_y: 0,
+                    block_z: region_z,
+                },
+                RigidBody::Static,
+                Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
+            ));
+        }
+    }
 }
 
 pub fn region_update(
@@ -43,9 +122,11 @@ pub fn region_update(
         player_region_x, player_region_y, player_region_z
     );
 
-    // todo 删除已有区块
+    // 删除已有区块
+    let mut view_region_list: Vec<&ViewRegion> = Vec::new();
     for (entity, view_region) in view_region_entity.iter() {
-        if (in_region(
+        view_region_list.push(&view_region);
+        if (!in_region(
             view_region.block_x,
             view_region.block_y,
             view_region.block_z,
@@ -55,10 +136,14 @@ pub fn region_update(
             2,
         )) {
             commands.entity(entity).remove::<ViewRegion>();
+            println!("delete {:?}", view_region);
         }
     }
+    let mut rigid_region_list: Vec<&RigidRegion> = Vec::new();
     for (entity, rigid_region) in rigid_region_entity.iter() {
-        if (in_region(
+        println!("rigid_region {:?}", rigid_region);
+        rigid_region_list.push(&rigid_region);
+        if (!in_region(
             rigid_region.block_x,
             rigid_region.block_y,
             rigid_region.block_z,
@@ -68,75 +153,93 @@ pub fn region_update(
             1,
         )) {
             commands.entity(entity).remove::<RigidRegion>();
+            println!("delete {:?}", rigid_region);
+        }
+    }
+
+    // view地形 默认加载周围25(5*5)个区块
+    let cube_material = materials.add(Color::WHITE);
+    for region_x in player_region_x - 2..=player_region_x + 2 {
+        for region_z in player_region_z - 2..=player_region_z + 2 {
+            // 检查是否已经存在
+            let fit_num = view_region_list
+                .iter()
+                .filter(|v| v.block_x == region_x && v.block_z == region_z)
+                .count();
+            if (fit_num == 0) {
+                println!("update add view x: {}, z: {}", region_x, region_z);
+                let mut cube_positions: Vec<Transform> = Vec::new();
+                for region_block_x in 0..16 {
+                    for region_block_z in 0..16 {
+                        let block_x = region_x * 16 + region_block_x;
+                        let block_z = region_z * 16 + region_block_z;
+                        let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                        cube_positions.push(Transform::from_xyz(
+                            block_x as f32,
+                            height as f32 * 2.0f32,
+                            block_z as f32,
+                        ));
+                    }
+                }
+                commands.spawn((
+                    ViewRegion {
+                        block_x: region_x,
+                        block_y: 0,
+                        block_z: region_z,
+                    },
+                    PbrBundle {
+                        mesh: meshes.add(create_cube_mesh(&cube_positions)),
+                        material: cube_material.clone(),
+                        ..default()
+                    },
+                ));
+            }
         }
     }
 
     // rigid地形 加载周围9(3*3)个区块
-    let mut collider_cube_positions: Vec<Transform> = Vec::new();
     for region_x in player_region_x - 1..=player_region_x + 1 {
         for region_z in player_region_z - 1..=player_region_z + 1 {
-            for region_block_x in 0..16 {
-                for region_block_z in 0..16 {
-                    let block_x = region_x * 16 + region_block_x;
-                    let block_z = region_z * 16 + region_block_z;
-                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
-                    collider_cube_positions.push(Transform::from_xyz(
-                        block_x as f32,
-                        height as f32 * 2.0f32,
-                        block_z as f32,
-                    ));
+            // 检查是否存在
+            let fit_num = rigid_region_list
+                .iter()
+                .filter(|v| v.block_x == region_x && v.block_z == region_z)
+                .count();
+            if (fit_num == 0) {
+                println!("update add rigid x: {}, z: {}", region_x, region_z);
+                let mut collider_cube_positions: Vec<Transform> = Vec::new();
+                for region_block_x in 0..16 {
+                    for region_block_z in 0..16 {
+                        let block_x = region_x * 16 + region_block_x;
+                        let block_z = region_z * 16 + region_block_z;
+                        let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                        collider_cube_positions.push(Transform::from_xyz(
+                            block_x as f32,
+                            height as f32 * 2.0f32,
+                            block_z as f32,
+                        ));
+                    }
                 }
+                let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
+                commands.spawn((
+                    RigidRegion {
+                        block_x: region_x,
+                        block_y: 0,
+                        block_z: region_z,
+                    },
+                    RigidBody::Static,
+                    Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
+                ));
             }
         }
     }
-    let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
-    commands.spawn((
-        ViewRegion {
-            block_x: player_region_x,
-            block_y: player_region_y,
-            block_z: player_region_z,
-        },
-        RigidBody::Static,
-        Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
-    ));
-
-    // view地形 默认加载周围25(5*5)个区块
-    let cube_material = materials.add(Color::WHITE);
-    let mut cube_positions: Vec<Transform> = Vec::new();
-    for region_x in player_region_x - 2..=player_region_x + 2 {
-        for region_z in player_region_z - 2..=player_region_z + 2 {
-            for region_block_x in 0..16 {
-                for region_block_z in 0..16 {
-                    let block_x = region_x * 16 + region_block_x;
-                    let block_z = region_z * 16 + region_block_z;
-                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
-                    cube_positions.push(Transform::from_xyz(
-                        block_x as f32,
-                        height as f32 * 2.0f32,
-                        block_z as f32,
-                    ));
-                }
-            }
-        }
-    }
-    commands.spawn((
-        RigidRegion {
-            block_x: player_region_x,
-            block_y: player_region_y,
-            block_z: player_region_z,
-        },
-        PbrBundle {
-            mesh: meshes.add(create_cube_mesh(&cube_positions)),
-            material: cube_material.clone(),
-            ..default()
-        },
-    ));
 }
 
 fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) -> bool {
     if ((bx - px).abs() <= region && (bz - pz).abs() <= region) {
         return true;
     }
+    println!("{} {} {} {} {}", bx, bz, px, pz, region);
     return false;
 }
 
