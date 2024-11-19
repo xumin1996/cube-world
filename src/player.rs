@@ -74,7 +74,7 @@ pub fn handle_mouse_motion(
     );
 }
 
-pub fn apply_controls(
+pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
     mut query: Query<&mut TnuaController>,

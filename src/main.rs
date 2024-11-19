@@ -23,7 +23,7 @@ fn main() {
         .add_systems(
             Update,
             (
-                player::apply_controls,
+                player::handle_keyboard_controls,
                 player::handle_mouse_motion,
                 region::region_update,
             ),

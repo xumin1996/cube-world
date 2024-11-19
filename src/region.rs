@@ -1,26 +1,48 @@
 use super::player::Player;
 use avian3d::{parry::shape, prelude::*};
-use bevy::prelude::*;
-use noise::{NoiseFn, Perlin};
 use bevy::render::{
     mesh::{Indices, VertexAttributeValues},
     render_asset::RenderAssetUsages,
     render_resource::PrimitiveTopology,
 };
+use bevy::{ecs::entity, prelude::*};
+use noise::{NoiseFn, Perlin};
+
+#[derive(Component)]
+pub struct ViewRegion {}
+
+#[derive(Component)]
+pub struct RigidRegion {}
 
 pub fn region_update(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     player_position_query: Query<&Transform, With<Player>>,
+    view_region_entity: Query<Entity, With<ViewRegion>>,
+    rigid_region_entity: Query<Entity, With<RigidRegion>>,
 ) {
     let perlin = Perlin::new(1);
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
     let player_region_z = player_position_query.single().translation.z as i32 / 16;
+    println!(
+        "player region, x {}, y:{}, z: {}",
+        player_region_x, player_region_y, player_region_z
+    );
 
     // todo 删除已有区块
+    let mut nu: i32 = 0;
+    for entity in view_region_entity.iter() {
+        commands.entity(entity).remove::<ViewRegion>();
+        nu += 1;
+    }
+    for entity in rigid_region_entity.iter() {
+        commands.entity(entity).remove::<RigidRegion>();
+        nu += 1;
+    }
+    println!("delete {}", nu);
 
     // rigid地形 加载周围9(3*3)个区块
     let mut collider_cube_positions: Vec<Transform> = Vec::new();
@@ -40,8 +62,9 @@ pub fn region_update(
             }
         }
     }
-    let collider_cube_mesh = create_cube_mesh(collider_cube_positions);
+    let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
     commands.spawn((
+        ViewRegion {},
         RigidBody::Static,
         Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
     ));
@@ -65,15 +88,20 @@ pub fn region_update(
             }
         }
     }
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(create_cube_mesh(cube_positions)),
-        material: cube_material.clone(),
-        ..default()
-    });
+    commands.spawn((
+        RigidRegion {},
+        PbrBundle {
+            mesh: meshes.add(create_cube_mesh(&cube_positions)),
+            material: cube_material.clone(),
+            ..default()
+        },
+    ));
+
+    println!("collider_cube_positions: {}", collider_cube_positions.len())
 }
 
 // 构造Mesh
-fn create_cube_mesh(cube_positions: Vec<Transform>) -> Mesh {
+fn create_cube_mesh(cube_positions: &Vec<Transform>) -> Mesh {
     let mut attribute_position: Vec<[f32; 3]> = Vec::new();
     let mut attribute_uv_0: Vec<[f32; 2]> = Vec::new();
     let mut attribute_normal: Vec<[f32; 3]> = Vec::new();
