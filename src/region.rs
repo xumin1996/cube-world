@@ -1,5 +1,8 @@
 use super::player::Player;
-use avian3d::{parry::shape, prelude::*};
+use avian3d::{
+    parry::{math, shape},
+    prelude::*,
+};
 use bevy::render::{
     mesh::{Indices, VertexAttributeValues},
     render_asset::RenderAssetUsages,
@@ -9,18 +12,26 @@ use bevy::{ecs::entity, prelude::*};
 use noise::{NoiseFn, Perlin};
 
 #[derive(Component)]
-pub struct ViewRegion {}
+pub struct ViewRegion {
+    block_x: i32,
+    block_y: i32,
+    block_z: i32,
+}
 
 #[derive(Component)]
-pub struct RigidRegion {}
+pub struct RigidRegion {
+    block_x: i32,
+    block_y: i32,
+    block_z: i32,
+}
 
 pub fn region_update(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     player_position_query: Query<&Transform, With<Player>>,
-    view_region_entity: Query<Entity, With<ViewRegion>>,
-    rigid_region_entity: Query<Entity, With<RigidRegion>>,
+    view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
+    rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
 ) {
     let perlin = Perlin::new(1);
     // 角色所在区块
@@ -33,16 +44,32 @@ pub fn region_update(
     );
 
     // todo 删除已有区块
-    let mut nu: i32 = 0;
-    for entity in view_region_entity.iter() {
-        commands.entity(entity).remove::<ViewRegion>();
-        nu += 1;
+    for (entity, view_region) in view_region_entity.iter() {
+        if (in_region(
+            view_region.block_x,
+            view_region.block_y,
+            view_region.block_z,
+            player_region_x,
+            player_region_y,
+            player_region_z,
+            2,
+        )) {
+            commands.entity(entity).remove::<ViewRegion>();
+        }
     }
-    for entity in rigid_region_entity.iter() {
-        commands.entity(entity).remove::<RigidRegion>();
-        nu += 1;
+    for (entity, rigid_region) in rigid_region_entity.iter() {
+        if (in_region(
+            rigid_region.block_x,
+            rigid_region.block_y,
+            rigid_region.block_z,
+            player_region_x,
+            player_region_y,
+            player_region_z,
+            1,
+        )) {
+            commands.entity(entity).remove::<RigidRegion>();
+        }
     }
-    println!("delete {}", nu);
 
     // rigid地形 加载周围9(3*3)个区块
     let mut collider_cube_positions: Vec<Transform> = Vec::new();
@@ -56,7 +83,7 @@ pub fn region_update(
                     collider_cube_positions.push(Transform::from_xyz(
                         block_x as f32,
                         height as f32 * 2.0f32,
-                        block_x as f32,
+                        block_z as f32,
                     ));
                 }
             }
@@ -64,7 +91,11 @@ pub fn region_update(
     }
     let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
     commands.spawn((
-        ViewRegion {},
+        ViewRegion {
+            block_x: player_region_x,
+            block_y: player_region_y,
+            block_z: player_region_z,
+        },
         RigidBody::Static,
         Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
     ));
@@ -82,22 +113,31 @@ pub fn region_update(
                     cube_positions.push(Transform::from_xyz(
                         block_x as f32,
                         height as f32 * 2.0f32,
-                        block_x as f32,
+                        block_z as f32,
                     ));
                 }
             }
         }
     }
     commands.spawn((
-        RigidRegion {},
+        RigidRegion {
+            block_x: player_region_x,
+            block_y: player_region_y,
+            block_z: player_region_z,
+        },
         PbrBundle {
             mesh: meshes.add(create_cube_mesh(&cube_positions)),
             material: cube_material.clone(),
             ..default()
         },
     ));
+}
 
-    println!("collider_cube_positions: {}", collider_cube_positions.len())
+fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) -> bool {
+    if ((bx - px).abs() <= region && (bz - pz).abs() <= region) {
+        return true;
+    }
+    return false;
 }
 
 // 构造Mesh

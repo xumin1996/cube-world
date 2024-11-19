@@ -124,3 +124,17 @@ pub fn handle_keyboard_controls(
     lt.eye = player_position.translation - camera_look_at.look_at;
     lt.target = player_position.translation;
 }
+
+pub fn handle_camera(
+    camera_look_at: Res<CameraLookAt>,
+    mut player_position_query: Query<&mut Transform, With<Player>>,
+    mut lookTransformQuery: Query<&mut LookTransform>,
+) {
+    // 更新摄像机位置
+    let Ok(mut lt) = lookTransformQuery.get_single_mut() else {
+        return;
+    };
+    let player_position: &Transform = player_position_query.get_single().unwrap();
+    lt.eye = player_position.translation - camera_look_at.look_at;
+    lt.target = player_position.translation;
+}
