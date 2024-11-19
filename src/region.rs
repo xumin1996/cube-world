@@ -117,10 +117,10 @@ pub fn region_update(
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
     let player_region_z = player_position_query.single().translation.z as i32 / 16;
-    println!(
-        "player region, x {}, y:{}, z: {}",
-        player_region_x, player_region_y, player_region_z
-    );
+    // println!(
+    //     "player region, x {}, y:{}, z: {}",
+    //     player_region_x, player_region_y, player_region_z
+    // );
 
     // 删除已有区块
     let mut view_region_list: Vec<&ViewRegion> = Vec::new();
@@ -135,13 +135,12 @@ pub fn region_update(
             player_region_z,
             2,
         )) {
-            commands.entity(entity).remove::<ViewRegion>();
+            commands.entity(entity).despawn();
             println!("delete {:?}", view_region);
         }
     }
     let mut rigid_region_list: Vec<&RigidRegion> = Vec::new();
     for (entity, rigid_region) in rigid_region_entity.iter() {
-        println!("rigid_region {:?}", rigid_region);
         rigid_region_list.push(&rigid_region);
         if (!in_region(
             rigid_region.block_x,
@@ -152,7 +151,7 @@ pub fn region_update(
             player_region_z,
             1,
         )) {
-            commands.entity(entity).remove::<RigidRegion>();
+            commands.entity(entity).despawn();
             println!("delete {:?}", rigid_region);
         }
     }
@@ -239,7 +238,6 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
     if ((bx - px).abs() <= region && (bz - pz).abs() <= region) {
         return true;
     }
-    println!("{} {} {} {} {}", bx, bz, px, pz, region);
     return false;
 }
 
