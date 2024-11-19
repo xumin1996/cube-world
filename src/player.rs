@@ -24,9 +24,9 @@ pub fn setup(
         RigidBody::Dynamic,
         Collider::cuboid(0.2, 0.2, 0.2),
         PbrBundle {
-            mesh: meshes.add(Cuboid::new(0.8, 0.8, 0.8)),
+            mesh: meshes.add(Cuboid::new(0.7, 0.7, 0.7)),
             material: materials.add(Color::WHITE),
-            transform: Transform::from_xyz(5.0, 15.0, 5.0),
+            transform: Transform::from_xyz(5.0, 40.0, 5.0),
             ..default()
         },
         Player,
@@ -103,13 +103,13 @@ pub fn handle_keyboard_controls(
     }
     controller.basis(TnuaBuiltinWalk {
         desired_velocity: direction.normalize_or_zero() * 15.0,
-        float_height: 1.5,
+        float_height: 2.0,
         ..Default::default()
     });
 
     if keyboard.pressed(KeyCode::Space) {
         controller.action(TnuaBuiltinJump {
-            height: 1.5,
+            height: 2.0,
             ..Default::default()
         });
     }

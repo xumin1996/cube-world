@@ -53,7 +53,7 @@ pub fn startup(
                     let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
                     cube_positions.push(Transform::from_xyz(
                         block_x as f32,
-                        height as f32 * 2.0f32,
+                        height as f32 * 5.0f32,
                         block_z as f32,
                     ));
                 }
@@ -85,7 +85,7 @@ pub fn startup(
                     let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
                     collider_cube_positions.push(Transform::from_xyz(
                         block_x as f32,
-                        height as f32 * 2.0f32,
+                        height as f32 * 5.0f32,
                         block_z as f32,
                     ));
                 }
@@ -175,7 +175,7 @@ pub fn region_update(
                         let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
                         cube_positions.push(Transform::from_xyz(
                             block_x as f32,
-                            height as f32 * 2.0f32,
+                            height as f32 * 5.0f32,
                             block_z as f32,
                         ));
                     }
@@ -214,7 +214,7 @@ pub fn region_update(
                         let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
                         collider_cube_positions.push(Transform::from_xyz(
                             block_x as f32,
-                            height as f32 * 2.0f32,
+                            height as f32 * 5.0f32,
                             block_z as f32,
                         ));
                     }
