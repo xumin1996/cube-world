@@ -30,7 +30,6 @@ pub fn startup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let perlin = Perlin::new(1);
     // 角色所在区块
     let player_region_x = 0i32;
     let player_region_y = 0i32;
@@ -50,10 +49,10 @@ pub fn startup(
                 for region_block_z in 0..16 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
-                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                    let height = get_height(block_x, 0, block_z);
                     cube_positions.push(Transform::from_xyz(
                         block_x as f32,
-                        height as f32 * 5.0f32,
+                        height,
                         block_z as f32,
                     ));
                 }
@@ -82,10 +81,10 @@ pub fn startup(
                 for region_block_z in 0..16 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
-                    let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                    let height = get_height(block_x, 0, block_z);
                     collider_cube_positions.push(Transform::from_xyz(
                         block_x as f32,
-                        height as f32 * 5.0f32,
+                        height,
                         block_z as f32,
                     ));
                 }
@@ -112,7 +111,8 @@ pub fn region_update(
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
 ) {
-    let perlin = Perlin::new(1);
+    let view_circle = 5;
+    let rigid_circle = 1;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -133,7 +133,7 @@ pub fn region_update(
             player_region_x,
             player_region_y,
             player_region_z,
-            2,
+            view_circle,
         )) {
             commands.entity(entity).despawn();
             println!("delete {:?}", view_region);
@@ -149,7 +149,7 @@ pub fn region_update(
             player_region_x,
             player_region_y,
             player_region_z,
-            1,
+            rigid_circle,
         )) {
             commands.entity(entity).despawn();
             println!("delete {:?}", rigid_region);
@@ -158,8 +158,8 @@ pub fn region_update(
 
     // view地形 默认加载周围25(5*5)个区块
     let cube_material = materials.add(Color::WHITE);
-    for region_x in player_region_x - 2..=player_region_x + 2 {
-        for region_z in player_region_z - 2..=player_region_z + 2 {
+    for region_x in player_region_x - view_circle..=player_region_x + view_circle {
+        for region_z in player_region_z - view_circle..=player_region_z + view_circle {
             // 检查是否已经存在
             let fit_num = view_region_list
                 .iter()
@@ -172,10 +172,10 @@ pub fn region_update(
                     for region_block_z in 0..16 {
                         let block_x = region_x * 16 + region_block_x;
                         let block_z = region_z * 16 + region_block_z;
-                        let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                        let height = get_height(block_x, 0, block_z);
                         cube_positions.push(Transform::from_xyz(
                             block_x as f32,
-                            height as f32 * 5.0f32,
+                            height,
                             block_z as f32,
                         ));
                     }
@@ -197,8 +197,8 @@ pub fn region_update(
     }
 
     // rigid地形 加载周围9(3*3)个区块
-    for region_x in player_region_x - 1..=player_region_x + 1 {
-        for region_z in player_region_z - 1..=player_region_z + 1 {
+    for region_x in player_region_x - rigid_circle..=player_region_x + rigid_circle {
+        for region_z in player_region_z - rigid_circle..=player_region_z + rigid_circle {
             // 检查是否存在
             let fit_num = rigid_region_list
                 .iter()
@@ -211,10 +211,10 @@ pub fn region_update(
                     for region_block_z in 0..16 {
                         let block_x = region_x * 16 + region_block_x;
                         let block_z = region_z * 16 + region_block_z;
-                        let height = perlin.get([block_x as f64 / 10.0, block_z as f64 / 10.0]);
+                        let height = get_height(block_x, 0, block_z);
                         collider_cube_positions.push(Transform::from_xyz(
                             block_x as f32,
-                            height as f32 * 5.0f32,
+                            height,
                             block_z as f32,
                         ));
                     }
@@ -239,6 +239,12 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
         return true;
     }
     return false;
+}
+
+fn get_height(x: i32, y: i32, z: i32) -> f32 {
+    let perlin = Perlin::new(1);
+    let height = perlin.get([x as f64 / 100.0, z as f64 / 100.0]);
+    return (height as f32 * 20.0f32).round();
 }
 
 // 构造Mesh
