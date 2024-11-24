@@ -111,7 +111,7 @@ pub fn region_update(
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
 ) {
-    let view_circle = 5;
+    let view_circle = 8;
     let rigid_circle = 1;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
@@ -165,6 +165,7 @@ pub fn region_update(
                 .iter()
                 .filter(|v| v.block_x == region_x && v.block_z == region_z)
                 .count();
+
             if (fit_num == 0) {
                 println!("update add view x: {}, z: {}", region_x, region_z);
                 let mut cube_positions: Vec<Transform> = Vec::new();
@@ -242,8 +243,9 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
 }
 
 fn get_height(x: i32, y: i32, z: i32) -> f32 {
+    let region_max_size = 256f64;
     let perlin = Perlin::new(1);
-    let height = perlin.get([x as f64 / 100.0, z as f64 / 100.0]);
+    let height = perlin.get([x as f64 / region_max_size, z as f64 / region_max_size]);
     return (height as f32 * 20.0f32).round();
 }
 
