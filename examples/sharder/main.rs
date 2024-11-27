@@ -38,7 +38,7 @@ pub fn startup(
 
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
@@ -52,5 +52,5 @@ pub fn handle_mouse_motion(
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
 
     // 旋转
-    camera_transform.single_mut().rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 500.));
+    camera_transform.single_mut().rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
 }
