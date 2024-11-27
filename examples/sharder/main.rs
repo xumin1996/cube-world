@@ -1,14 +1,13 @@
-use avian3d::{parry::shape, prelude::*};
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::prelude::*;
-use bevy_tnua::prelude::*;
-use bevy_tnua_avian3d::TnuaAvian3dPlugin;
-use smooth_bevy_cameras::LookTransformPlugin;
 use bevy::input::mouse::MouseMotion;
+use bevy::{
+    prelude::*,
+    reflect::TypePath,
+    render::render_resource::{AsBindGroup, ShaderRef},
+};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, MaterialPlugin::<CustomMaterial>::default()))
         .add_systems(Startup, startup)
         .add_systems(Update, handle_mouse_motion)
         .run();
@@ -17,12 +16,12 @@ fn main() {
 pub fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
     // 方块
-    commands.spawn((PbrBundle {
+    commands.spawn((MaterialMeshBundle {
         mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-        material: materials.add(Color::WHITE),
+        material: materials.add(CustomMaterial {}),
         ..default()
     },));
 
@@ -52,5 +51,16 @@ pub fn handle_mouse_motion(
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
 
     // 旋转
-    camera_transform.single_mut().rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+    camera_transform
+        .single_mut()
+        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+}
+
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct CustomMaterial {}
+
+impl Material for CustomMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/animate_shader.wgsl".into()
+    }
 }
