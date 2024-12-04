@@ -3,12 +3,15 @@ use avian3d::{
     parry::{math, shape},
     prelude::*,
 };
-use bevy::render::{
-    mesh::{Indices, VertexAttributeValues},
-    render_asset::RenderAssetUsages,
-    render_resource::PrimitiveTopology,
-};
 use bevy::{ecs::entity, prelude::*};
+use bevy::{
+    render::{
+        mesh::{Indices, VertexAttributeValues},
+        render_asset::RenderAssetUsages,
+        render_resource::PrimitiveTopology,
+    },
+    transform,
+};
 use noise::{NoiseFn, Perlin};
 
 #[derive(Component, Debug)]
@@ -44,18 +47,16 @@ pub fn startup(
     for region_x in player_region_x - 2..=player_region_x + 2 {
         for region_z in player_region_z - 2..=player_region_z + 2 {
             println!("setup add view x: {}, z: {}", region_x, region_z);
-            let mut cube_positions: Vec<Transform> = Vec::new();
+            let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
             for region_block_x in 0..16 {
+                let mut cube_positions_z: Vec<f32> = Vec::new();
                 for region_block_z in 0..16 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
                     let height = get_height(block_x, 0, block_z);
-                    cube_positions.push(Transform::from_xyz(
-                        block_x as f32,
-                        height,
-                        block_z as f32,
-                    ));
+                    cube_positions_z.push(height);
                 }
+                cube_positions_x.push(cube_positions_z);
             }
             commands.spawn((
                 ViewRegion {
@@ -64,7 +65,10 @@ pub fn startup(
                     block_z: region_z,
                 },
                 PbrBundle {
-                    mesh: meshes.add(create_cube_mesh(&cube_positions)),
+                    mesh: meshes.add(create_plain_mesh(
+                        &cube_positions_x,
+                        Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
+                    )),
                     material: cube_material.clone(),
                     ..default()
                 },
@@ -76,20 +80,21 @@ pub fn startup(
     for region_x in player_region_x - 1..=player_region_x + 1 {
         for region_z in player_region_z - 1..=player_region_z + 1 {
             println!("setup add rigid x: {}, z: {}", region_x, region_z);
-            let mut collider_cube_positions: Vec<Transform> = Vec::new();
+            let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
             for region_block_x in 0..16 {
+                let mut cube_positions_z: Vec<f32> = Vec::new();
                 for region_block_z in 0..16 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
                     let height = get_height(block_x, 0, block_z);
-                    collider_cube_positions.push(Transform::from_xyz(
-                        block_x as f32,
-                        height,
-                        block_z as f32,
-                    ));
+                    cube_positions_z.push(height);
                 }
+                cube_positions_x.push(cube_positions_z);
             }
-            let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
+            let collider_cube_mesh = create_plain_mesh(
+                &cube_positions_x,
+                Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
+            );
             commands.spawn((
                 RigidRegion {
                     block_x: region_x,
@@ -247,6 +252,53 @@ fn get_height(x: i32, y: i32, z: i32) -> f32 {
     let perlin = Perlin::new(1);
     let height = perlin.get([x as f64 / region_max_size, z as f64 / region_max_size]);
     return (height as f32 * 20.0f32).round();
+}
+
+// 创建平面网格 33x33 x,y
+fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
+    let mut attribute_position: Vec<[f32; 3]> = Vec::new();
+    let mut attribute_uv_0: Vec<[f32; 2]> = Vec::new();
+    let mut attribute_normal: Vec<[f32; 3]> = Vec::new();
+    let mut indices: Vec<u32> = Vec::new();
+
+    for (x_index, z_list) in height_mesh.iter().enumerate() {
+        for (z_index, y_height) in z_list.iter().enumerate() {
+            // 顶点
+            let cube_size = 1f32;
+            let x = cube_size * x_index as f32 + transform.translation.x;
+            let y = *y_height;
+            let z = cube_size * z_index as f32 + transform.translation.z;
+            attribute_position.push([x, y, z]);
+
+            // uv
+            let uv_size = 1f32 / 32f32;
+            attribute_uv_0.push([uv_size * x_index as f32, uv_size * z_index as f32]);
+
+            // 法线
+            attribute_normal.push([0.0, 1.0, 0.0]);
+        }
+    }
+
+    // 索引
+    for z in 0..=32 {
+        for x in 0..=32 {
+            let start_index: u32 = x * 33 + z;
+            let short_indices: Vec<u32> = vec![0, 33, 1, 2, 33, 34]
+                .iter()
+                .map(|index| index + start_index)
+                .collect();
+            indices.extend(short_indices);
+        }
+    }
+
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, attribute_position)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, attribute_uv_0)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, attribute_normal)
+    .with_inserted_indices(Indices::U32(indices))
 }
 
 // 构造Mesh
