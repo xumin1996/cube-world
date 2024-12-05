@@ -48,9 +48,9 @@ pub fn startup(
         for region_z in player_region_z - 2..=player_region_z + 2 {
             println!("setup add view x: {}, z: {}", region_x, region_z);
             let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-            for region_block_x in 0..16 {
+            for region_block_x in 0..17 {
                 let mut cube_positions_z: Vec<f32> = Vec::new();
-                for region_block_z in 0..16 {
+                for region_block_z in 0..17 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
                     let height = get_height(block_x, 0, block_z);
@@ -81,9 +81,9 @@ pub fn startup(
         for region_z in player_region_z - 1..=player_region_z + 1 {
             println!("setup add rigid x: {}, z: {}", region_x, region_z);
             let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-            for region_block_x in 0..16 {
+            for region_block_x in 0..17 {
                 let mut cube_positions_z: Vec<f32> = Vec::new();
-                for region_block_z in 0..16 {
+                for region_block_z in 0..17 {
                     let block_x = region_x * 16 + region_block_x;
                     let block_z = region_z * 16 + region_block_z;
                     let height = get_height(block_x, 0, block_z);
@@ -173,18 +173,16 @@ pub fn region_update(
 
             if (fit_num == 0) {
                 println!("update add view x: {}, z: {}", region_x, region_z);
-                let mut cube_positions: Vec<Transform> = Vec::new();
-                for region_block_x in 0..16 {
-                    for region_block_z in 0..16 {
+                let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
+                for region_block_x in 0..17 {
+                    let mut cube_positions_z: Vec<f32> = Vec::new();
+                    for region_block_z in 0..17 {
                         let block_x = region_x * 16 + region_block_x;
                         let block_z = region_z * 16 + region_block_z;
                         let height = get_height(block_x, 0, block_z);
-                        cube_positions.push(Transform::from_xyz(
-                            block_x as f32,
-                            height,
-                            block_z as f32,
-                        ));
+                        cube_positions_z.push(height);
                     }
+                    cube_positions_x.push(cube_positions_z);
                 }
                 commands.spawn((
                     ViewRegion {
@@ -193,7 +191,14 @@ pub fn region_update(
                         block_z: region_z,
                     },
                     PbrBundle {
-                        mesh: meshes.add(create_cube_mesh(&cube_positions)),
+                        mesh: meshes.add(create_plain_mesh(
+                            &cube_positions_x,
+                            Transform::from_xyz(
+                                region_x as f32 * 16f32,
+                                0f32,
+                                region_z as f32 * 16f32,
+                            ),
+                        )),
                         material: cube_material.clone(),
                         ..default()
                     },
@@ -212,20 +217,21 @@ pub fn region_update(
                 .count();
             if (fit_num == 0) {
                 println!("update add rigid x: {}, z: {}", region_x, region_z);
-                let mut collider_cube_positions: Vec<Transform> = Vec::new();
-                for region_block_x in 0..16 {
-                    for region_block_z in 0..16 {
+                let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
+                for region_block_x in 0..17 {
+                    let mut cube_positions_z: Vec<f32> = Vec::new();
+                    for region_block_z in 0..17 {
                         let block_x = region_x * 16 + region_block_x;
                         let block_z = region_z * 16 + region_block_z;
                         let height = get_height(block_x, 0, block_z);
-                        collider_cube_positions.push(Transform::from_xyz(
-                            block_x as f32,
-                            height,
-                            block_z as f32,
-                        ));
+                        cube_positions_z.push(height);
                     }
+                    cube_positions_x.push(cube_positions_z);
                 }
-                let collider_cube_mesh = create_cube_mesh(&collider_cube_positions);
+                let collider_cube_mesh = create_plain_mesh(
+                    &cube_positions_x,
+                    Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
+                );
                 commands.spawn((
                     RigidRegion {
                         block_x: region_x,
@@ -248,13 +254,13 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
 }
 
 fn get_height(x: i32, y: i32, z: i32) -> f32 {
-    let region_max_size = 256f64;
+    let region_max_size = 128f64;
     let perlin = Perlin::new(1);
     let height = perlin.get([x as f64 / region_max_size, z as f64 / region_max_size]);
     return (height as f32 * 20.0f32).round();
 }
 
-// 创建平面网格 33x33 x,y
+// 创建平面网格 (16+1)*(16+1) x,y
 fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
     let mut attribute_position: Vec<[f32; 3]> = Vec::new();
     let mut attribute_uv_0: Vec<[f32; 2]> = Vec::new();
@@ -271,7 +277,7 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
             attribute_position.push([x, y, z]);
 
             // uv
-            let uv_size = 1f32 / 32f32;
+            let uv_size = 1f32 / 16f32;
             attribute_uv_0.push([uv_size * x_index as f32, uv_size * z_index as f32]);
 
             // 法线
@@ -280,13 +286,17 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
     }
 
     // 索引
-    for z in 0..=32 {
-        for x in 0..=32 {
-            let start_index: u32 = x * 33 + z;
-            let short_indices: Vec<u32> = vec![0, 33, 1, 2, 33, 34]
+    for x in 0..16 {
+        for z in 0..16 {
+            let start_index: u32 = x * 17 + z;
+            let short_indices: Vec<u32> = vec![0, 1, 17, 1, 18, 17]
                 .iter()
                 .map(|index| index + start_index)
                 .collect();
+            for i in short_indices.iter() {
+                let region = attribute_position.get(*i as usize).unwrap();
+                println!("region {:?}", region);
+            }
             indices.extend(short_indices);
         }
     }

@@ -11,7 +11,16 @@ pub mod region;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins,
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "A Cool Title".into(),
+                    resolution: (300., 300.).into(),
+                    resizable: true,
+                    decorations: true,
+                    ..default()
+                }),
+                ..default()
+            }),
             PhysicsPlugins::default(),
             LookTransformPlugin,
             TnuaControllerPlugin::default(),
@@ -27,7 +36,7 @@ fn main() {
                 player::handle_mouse_motion,
                 player::handle_camera,
                 player::handle_light,
-                region::region_update,
+                // region::region_update,
             ),
         )
         .run();
