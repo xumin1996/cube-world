@@ -1,4 +1,4 @@
-use avian3d::{parry::shape, prelude::*};
+use avian3d::prelude::*;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
@@ -36,7 +36,7 @@ fn main() {
                 player::handle_mouse_motion,
                 player::handle_camera,
                 player::handle_light,
-                // region::region_update,
+                region::region_update,
             ),
         )
         .run();
