@@ -1,16 +1,8 @@
 use super::player::Player;
-use avian3d::{
-    parry::{math, shape},
-    prelude::*,
-};
-use bevy::{ecs::entity, prelude::*};
-use bevy::{
-    render::{
-        mesh::{Indices, VertexAttributeValues},
-        render_asset::RenderAssetUsages,
-        render_resource::PrimitiveTopology,
-    },
-    transform,
+use avian3d::prelude::*;
+use bevy::prelude::*;
+use bevy::render::{
+    mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
 use noise::{NoiseFn, Perlin};
 

@@ -117,10 +117,10 @@ pub fn handle_keyboard_controls(
 pub fn handle_camera(
     camera_look_at: Res<CameraLookAt>,
     player_position_query: Query<&Transform, With<Player>>,
-    mut lookTransformQuery: Query<&mut LookTransform>,
+    mut look_transform_query: Query<&mut LookTransform>,
 ) {
     // 更新摄像机位置
-    let Ok(mut lt) = lookTransformQuery.get_single_mut() else {
+    let Ok(mut lt) = look_transform_query.get_single_mut() else {
         return;
     };
     let player_position: &Transform = player_position_query.single();
