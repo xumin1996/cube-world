@@ -249,7 +249,7 @@ fn get_height(x: i32, y: i32, z: i32) -> f32 {
     let region_max_size = 128f64;
     let perlin = Perlin::new(1);
     let height = perlin.get([x as f64 / region_max_size, z as f64 / region_max_size]);
-    return (height as f32 * 20.0f32).round();
+    return height as f32 * 500.0f32;
 }
 
 // 创建平面网格 (16+1)*(16+1) x,y
