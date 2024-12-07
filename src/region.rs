@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
-use noise::{NoiseFn, Perlin};
+use simdnoise::*;
 
 #[derive(Component, Debug)]
 pub struct ViewRegion {
@@ -39,17 +39,7 @@ pub fn startup(
     for region_x in player_region_x - 2..=player_region_x + 2 {
         for region_z in player_region_z - 2..=player_region_z + 2 {
             println!("setup add view x: {}, z: {}", region_x, region_z);
-            let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-            for region_block_x in 0..17 {
-                let mut cube_positions_z: Vec<f32> = Vec::new();
-                for region_block_z in 0..17 {
-                    let block_x = region_x * 16 + region_block_x;
-                    let block_z = region_z * 16 + region_block_z;
-                    let height = get_height(block_x, 0, block_z);
-                    cube_positions_z.push(height);
-                }
-                cube_positions_x.push(cube_positions_z);
-            }
+            let plain_height = get_mesh(region_x, region_z);
             commands.spawn((
                 ViewRegion {
                     block_x: region_x,
@@ -57,10 +47,7 @@ pub fn startup(
                     block_z: region_z,
                 },
                 PbrBundle {
-                    mesh: meshes.add(create_plain_mesh(
-                        &cube_positions_x,
-                        Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
-                    )),
+                    mesh: meshes.add(plain_height),
                     material: cube_material.clone(),
                     ..default()
                 },
@@ -72,21 +59,7 @@ pub fn startup(
     for region_x in player_region_x - 1..=player_region_x + 1 {
         for region_z in player_region_z - 1..=player_region_z + 1 {
             println!("setup add rigid x: {}, z: {}", region_x, region_z);
-            let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-            for region_block_x in 0..17 {
-                let mut cube_positions_z: Vec<f32> = Vec::new();
-                for region_block_z in 0..17 {
-                    let block_x = region_x * 16 + region_block_x;
-                    let block_z = region_z * 16 + region_block_z;
-                    let height = get_height(block_x, 0, block_z);
-                    cube_positions_z.push(height);
-                }
-                cube_positions_x.push(cube_positions_z);
-            }
-            let collider_cube_mesh = create_plain_mesh(
-                &cube_positions_x,
-                Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
-            );
+            let plain_height = get_mesh(region_x, region_z);
             commands.spawn((
                 RigidRegion {
                     block_x: region_x,
@@ -94,7 +67,7 @@ pub fn startup(
                     block_z: region_z,
                 },
                 RigidBody::Static,
-                Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
+                Collider::trimesh_from_mesh(&plain_height).unwrap(),
             ));
         }
     }
@@ -165,17 +138,7 @@ pub fn region_update(
 
             if fit_num == 0 {
                 println!("update add view x: {}, z: {}", region_x, region_z);
-                let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-                for region_block_x in 0..17 {
-                    let mut cube_positions_z: Vec<f32> = Vec::new();
-                    for region_block_z in 0..17 {
-                        let block_x = region_x * 16 + region_block_x;
-                        let block_z = region_z * 16 + region_block_z;
-                        let height = get_height(block_x, 0, block_z);
-                        cube_positions_z.push(height);
-                    }
-                    cube_positions_x.push(cube_positions_z);
-                }
+                let plain_height = get_mesh(region_x, region_z);
                 commands.spawn((
                     ViewRegion {
                         block_x: region_x,
@@ -183,14 +146,7 @@ pub fn region_update(
                         block_z: region_z,
                     },
                     PbrBundle {
-                        mesh: meshes.add(create_plain_mesh(
-                            &cube_positions_x,
-                            Transform::from_xyz(
-                                region_x as f32 * 16f32,
-                                0f32,
-                                region_z as f32 * 16f32,
-                            ),
-                        )),
+                        mesh: meshes.add(plain_height),
                         material: cube_material.clone(),
                         ..default()
                     },
@@ -209,21 +165,7 @@ pub fn region_update(
                 .count();
             if fit_num == 0 {
                 println!("update add rigid x: {}, z: {}", region_x, region_z);
-                let mut cube_positions_x: Vec<Vec<f32>> = Vec::new();
-                for region_block_x in 0..17 {
-                    let mut cube_positions_z: Vec<f32> = Vec::new();
-                    for region_block_z in 0..17 {
-                        let block_x = region_x * 16 + region_block_x;
-                        let block_z = region_z * 16 + region_block_z;
-                        let height = get_height(block_x, 0, block_z);
-                        cube_positions_z.push(height);
-                    }
-                    cube_positions_x.push(cube_positions_z);
-                }
-                let collider_cube_mesh = create_plain_mesh(
-                    &cube_positions_x,
-                    Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
-                );
+                let plain_height = get_mesh(region_x, region_z);
                 commands.spawn((
                     RigidRegion {
                         block_x: region_x,
@@ -231,7 +173,7 @@ pub fn region_update(
                         block_z: region_z,
                     },
                     RigidBody::Static,
-                    Collider::trimesh_from_mesh(&collider_cube_mesh).unwrap(),
+                    Collider::trimesh_from_mesh(&plain_height).unwrap(),
                 ));
             }
         }
@@ -245,11 +187,19 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
     return false;
 }
 
-fn get_height(x: i32, y: i32, z: i32) -> f32 {
-    let region_max_size = 128f64;
-    let perlin = Perlin::new(1);
-    let height = perlin.get([x as f64 / region_max_size, z as f64 / region_max_size]);
-    return height as f32 * 500.0f32;
+fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
+    let plain_size = 16u32;
+    let heights = NoiseBuilder::fbm_2d((plain_size + 1) as usize, (plain_size + 1) as usize)
+        .generate_scaled(0.0, 10.0);
+    let plain_height: Vec<Vec<f32>> = heights
+        .chunks((plain_size + 1) as usize)
+        .map(|chunk| chunk.to_vec())
+        .collect();
+    let collider_cube_mesh = create_plain_mesh(
+        &plain_height,
+        Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
+    );
+    collider_cube_mesh
 }
 
 // 创建平面网格 (16+1)*(16+1) x,y

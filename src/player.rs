@@ -25,7 +25,7 @@ pub fn setup(
         PbrBundle {
             mesh: meshes.add(Cuboid::new(0.7, 0.7, 0.7)),
             material: materials.add(Color::WHITE),
-            transform: Transform::from_xyz(5.0, 40.0, 5.0),
+            transform: Transform::from_xyz(5.0, 100.0, 5.0),
             ..default()
         },
         Player,
