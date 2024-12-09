@@ -9,9 +9,18 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, startup)
-        .add_systems(Update, handle_mouse_motion)
+        .add_systems(Update, (handle_mouse_motion, handle_keyboard_controls))
         .run();
 }
+
+#[derive(Resource)]
+pub struct OffsetXZ {
+    x: i32,
+    z: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct ViewRegion;
 
 pub fn startup(
     mut commands: Commands,
@@ -19,24 +28,15 @@ pub fn startup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // 平面
-    let plain_size = 64u32;
-    let heights =
-        NoiseBuilder::fbm_2d((plain_size + 1) as usize, (plain_size + 1) as usize).generate_scaled(0.0, 1.0);
-    println!("size {:?}", heights.len());
-    let plain_height: Vec<Vec<f32>> = heights
-        .chunks((plain_size + 1) as usize)
-        .map(|chunk| chunk.to_vec())
-        .collect();
-
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(create_plain_mesh(
-            plain_size,
-            &plain_height,
-            Transform::from_xyz(0.5f32, 0f32, 0.5f32),
-        )),
-        material: materials.add(Color::WHITE),
-        ..default()
-    });
+    let plain_height = get_mesh(0, 0);
+    commands.spawn((
+        ViewRegion,
+        PbrBundle {
+            mesh: meshes.add(plain_height),
+            material: materials.add(Color::WHITE),
+            ..default()
+        },
+    ));
 
     // light
     commands.spawn(PointLightBundle {
@@ -50,9 +50,11 @@ pub fn startup(
 
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(30.0, 20.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
+
+    commands.insert_resource(OffsetXZ { x: 0, z: 0 });
 }
 
 pub fn handle_mouse_motion(
@@ -69,8 +71,70 @@ pub fn handle_mouse_motion(
         .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
 }
 
-// 创建平面网格 (plain_size+1)*(plain_size+1) x,y
-fn create_plain_mesh(plain_size: u32, height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
+pub fn handle_keyboard_controls(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
+    mut offsetXZ: ResMut<OffsetXZ>,
+) {
+    if keyboard.pressed(KeyCode::KeyW) {
+        offsetXZ.z = offsetXZ.z - 1;
+    }
+    if keyboard.pressed(KeyCode::KeyS) {
+        offsetXZ.z = offsetXZ.z + 1;
+    }
+    if keyboard.pressed(KeyCode::KeyA) {
+        offsetXZ.x = offsetXZ.x - 1;
+    }
+    if keyboard.pressed(KeyCode::KeyD) {
+        offsetXZ.x = offsetXZ.x + 1;
+    }
+
+    println!("offsetXZ {} {}", offsetXZ.x, offsetXZ.z);
+
+    for (entity, view_region) in view_region_entity.iter() {
+        commands.entity(entity).despawn();
+    }
+
+    let plain_height = get_mesh(offsetXZ.x, offsetXZ.z);
+    commands.spawn((
+        ViewRegion,
+        PbrBundle {
+            mesh: meshes.add(plain_height),
+            material: materials.add(Color::WHITE),
+            ..default()
+        },
+    ));
+}
+
+fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
+    let plain_size = 16u32;
+    let heights = NoiseBuilder::fbm_2d_offset(
+        region_x as f32,
+        (plain_size + 1) as usize,
+        region_z as f32,
+        (plain_size + 1) as usize,
+    )
+    .with_seed(1)
+    .generate_scaled(0.0, 10.0);
+    let mut plain_height: Vec<Vec<f32>> = heights
+        .chunks((plain_size + 1) as usize)
+        .map(|chunk| {
+            let mut rv = chunk.to_vec();
+            rv
+        })
+        .collect();
+    let collider_cube_mesh = create_plain_mesh(
+        &plain_height,
+        Transform::from_xyz(-8f32, 0f32, -8f32),
+    );
+    collider_cube_mesh
+}
+
+// 创建平面网格 (16+1)*(16+1) x,y
+fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
     let mut attribute_position: Vec<[f32; 3]> = Vec::new();
     let mut attribute_uv_0: Vec<[f32; 2]> = Vec::new();
     let mut attribute_normal: Vec<[f32; 3]> = Vec::new();
@@ -79,14 +143,14 @@ fn create_plain_mesh(plain_size: u32, height_mesh: &Vec<Vec<f32>>, transform: Tr
     for (x_index, z_list) in height_mesh.iter().enumerate() {
         for (z_index, y_height) in z_list.iter().enumerate() {
             // 顶点
-            let cube_size = 1f32 / plain_size as f32;
+            let cube_size = 1f32;
             let x = cube_size * x_index as f32 + transform.translation.x;
             let y = *y_height;
             let z = cube_size * z_index as f32 + transform.translation.z;
             attribute_position.push([x, y, z]);
 
             // uv
-            let uv_size = 1f32 / plain_size as f32;
+            let uv_size = 1f32 / 16f32;
             attribute_uv_0.push([uv_size * x_index as f32, uv_size * z_index as f32]);
 
             // 法线
@@ -95,14 +159,13 @@ fn create_plain_mesh(plain_size: u32, height_mesh: &Vec<Vec<f32>>, transform: Tr
     }
 
     // 索引
-    for x in 0..plain_size {
-        for z in 0..plain_size {
-            let start_index: u32 = x * (plain_size + 1) + z;
-            let short_indices: Vec<u32> =
-                vec![0, 1, plain_size + 1, 1, plain_size + 2, plain_size + 1]
-                    .iter()
-                    .map(|index| index + start_index)
-                    .collect();
+    for x in 0..16 {
+        for z in 0..16 {
+            let start_index: u32 = x * 17 + z;
+            let short_indices: Vec<u32> = vec![0, 1, 17, 1, 18, 17]
+                .iter()
+                .map(|index| index + start_index)
+                .collect();
             indices.extend(short_indices);
         }
     }

@@ -188,12 +188,18 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
 }
 
 fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
-    let plain_size = 16u32;
-    let heights = NoiseBuilder::fbm_2d((plain_size + 1) as usize, (plain_size + 1) as usize)
-        .generate_scaled(0.0, 10.0);
-    let plain_height: Vec<Vec<f32>> = heights
+    let plain_size = 16i32;
+    let heights = NoiseBuilder::fbm_2d_offset(
+        (region_x * plain_size) as f32,
+        (plain_size + 1) as usize,
+        (region_z * plain_size) as f32,
+        (plain_size + 1) as usize,
+    )
+    .with_seed(1)
+    .generate_scaled(0.0, 10.0);
+    let mut plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
-        .map(|chunk| chunk.to_vec())
+        .map(|chunk| {let mut rv = chunk.to_vec();rv})
         .collect();
     let collider_cube_mesh = create_plain_mesh(
         &plain_height,
