@@ -199,11 +199,18 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
     .generate_scaled(0.0, 10.0);
     let mut plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
-        .map(|chunk| {let mut rv = chunk.to_vec();rv})
+        .map(|chunk| {
+            let mut rv = chunk.to_vec();
+            rv
+        })
         .collect();
     let collider_cube_mesh = create_plain_mesh(
         &plain_height,
-        Transform::from_xyz(region_x as f32 * 16f32, 0f32, region_z as f32 * 16f32),
+        Transform::from_xyz(
+            region_x as f32 * plain_size as f32,
+            0f32,
+            region_z as f32 * plain_size as f32,
+        ),
     );
     collider_cube_mesh
 }
