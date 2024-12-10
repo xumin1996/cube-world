@@ -189,14 +189,16 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
 
 fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
     let plain_size = 16i32;
-    let heights = NoiseBuilder::fbm_2d_offset(
-        (region_x * plain_size) as f32,
-        (plain_size + 1) as usize,
+    // [x1,x1,x1,...,x2,x2,x2,...,x3,x3,x3,....xy, xy,xy,...]
+    let (heights, min, max) = NoiseBuilder::fbm_2d_offset(
         (region_z * plain_size) as f32,
+        (plain_size + 1) as usize,
+        (region_x * plain_size) as f32,
         (plain_size + 1) as usize,
     )
     .with_seed(1)
-    .generate_scaled(0.0, 10.0);
+    .generate();
+    let heights: Vec<f32> = heights.iter().map(|item| item * 100f32).collect();
     let mut plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
         .map(|chunk| {
