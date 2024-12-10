@@ -129,8 +129,10 @@ pub fn handle_camera(
 }
 
 pub fn handle_light(
+    mut gizmos: Gizmos,
     player_position_query: Query<&Transform, With<Player>>,
     mut point_light_transform: Query<&mut Transform, (With<PointLight>, Without<Player>)>,
+    point_light: Query<&PointLight>,
 ) {
     let player_position: &Transform = player_position_query.single();
     // 更新光源
@@ -138,5 +140,12 @@ pub fn handle_light(
         player_position.translation.x,
         player_position.translation.y + 5f32,
         player_position.translation.z,
+    );
+    
+    gizmos.sphere(
+        point_light_transform.single_mut().translation,
+        Quat::from_rotation_x(0f32),
+        point_light.single().range,
+        Color::srgb(1.0, 0f32, 0f32),
     );
 }

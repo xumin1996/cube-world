@@ -198,7 +198,7 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
     )
     .with_seed(1)
     .generate();
-    let heights: Vec<f32> = heights.iter().map(|item| item * 100f32).collect();
+    let heights: Vec<f32> = heights.iter().map(|item| item * 500f32).collect();
     let mut plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
         .map(|chunk| {
