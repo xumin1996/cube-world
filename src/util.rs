@@ -22,7 +22,7 @@ impl Triangle {
         // points
         let points_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_POSITION);
         let points;
-        if let VertexAttributeValues::Float32x3(vs) = *points_option.unwrap() {
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = points_option {
             points = vs.iter().map(
                 |v| Vec3::new(v[0], v[1], v[2])
             )
@@ -33,27 +33,27 @@ impl Triangle {
 
         // normals
         let normals_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_NORMAL);
-        let normals = match *normals_option.unwrap() {
-            VertexAttributeValues::Float32x3(vs) => {
-                vs.iter().map(
-                    |v| Vec3::new(v[0], v[1], v[2])
-                )
-                .collect()
-            },
-            _ => vec![]
-        };
+        let normals;
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = normals_option {
+            normals = vs.iter().map(
+                |v| Vec3::new(v[0], v[1], v[2])
+            )
+            .collect()
+        } else {
+            normals = vec![];
+        }
 
         // normal
         let uv0s_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_UV_0);
-        let uv0s = match *uv0s_option.unwrap() {
-            VertexAttributeValues::Float32x2(vs) => {
-                vs.iter().map(
-                    |v| Vec3::new(v[0], v[1], 0.0)
-                )
-                .collect()
-            },
-            _ => vec![]
-        };
+        let uv0s;
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = uv0s_option {
+            uv0s = vs.iter().map(
+                |v| Vec3::new(v[0], v[1], v[2])
+            )
+            .collect()
+        } else {
+            uv0s = vec![];
+        }
         
         Triangle {
             points: points,
