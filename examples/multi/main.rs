@@ -4,6 +4,7 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+pub mod util;
 
 fn main() {
     App::new()
@@ -27,8 +28,12 @@ pub fn startup(
     },));
 
     //
-    let am: Mesh = plane.build();
-    println!("{:?}", am.count_vertices());
+    // let plane_mesh:Mesh = plane.build();
+    // let points =  plane_mesh.attribute(Mesh::ATTRIBUTE_POSITION).unwrap();
+    // *points.
+    // util::Triangle::from(points, normal, uv)
+    // let am: Mesh = plane.build();
+    // println!("{:?}", am.count_vertices());
 
     // light
     commands.spawn(PointLightBundle {
