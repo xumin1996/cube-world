@@ -3,14 +3,14 @@ use bevy::prelude::*;
 use bevy::render::mesh::VertexAttributeValues;
 
 #[derive(Debug)]
-struct Triangle {
+pub struct Triangle {
     points: Vec<Vec3>,
     normal: Vec<Vec3>,
     uv: Vec<Vec3>, // 最后一位是0
 }
 
 impl Triangle {
-    pub const fn new(points: Vec<Vec3>, normal: Vec<Vec3>, uv: Vec<Vec3>) -> Triangle {
+    pub fn new(points: Vec<Vec3>, normal: Vec<Vec3>, uv: Vec<Vec3>) -> Triangle {
         Triangle {
             points: points,
             normal: normal,
@@ -18,12 +18,12 @@ impl Triangle {
         }
     }
     
-    pub fn from_mesh(mesh: Mesh) -> Triangle {
+    pub fn from_mesh(mesh: &Mesh) -> Triangle {
         // points
         let points_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_POSITION);
         let points;
         if let Option::Some(VertexAttributeValues::Float32x3(vs)) = points_option {
-            points = vs.iter().map(
+            points = vs.clone().iter().map(
                 |v| Vec3::new(v[0], v[1], v[2])
             )
             .collect()
@@ -35,7 +35,7 @@ impl Triangle {
         let normals_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_NORMAL);
         let normals;
         if let Option::Some(VertexAttributeValues::Float32x3(vs)) = normals_option {
-            normals = vs.iter().map(
+            normals = vs.clone().iter().map(
                 |v| Vec3::new(v[0], v[1], v[2])
             )
             .collect()
@@ -47,7 +47,7 @@ impl Triangle {
         let uv0s_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_UV_0);
         let uv0s;
         if let Option::Some(VertexAttributeValues::Float32x3(vs)) = uv0s_option {
-            uv0s = vs.iter().map(
+            uv0s = vs.clone().iter().map(
                 |v| Vec3::new(v[0], v[1], v[2])
             )
             .collect()

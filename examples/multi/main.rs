@@ -28,12 +28,10 @@ pub fn startup(
     },));
 
     //
-    // let plane_mesh:Mesh = plane.build();
-    // let points =  plane_mesh.attribute(Mesh::ATTRIBUTE_POSITION).unwrap();
-    // *points.
-    // util::Triangle::from(points, normal, uv)
-    // let am: Mesh = plane.build();
-    // println!("{:?}", am.count_vertices());
+    let plane_mesh:Mesh = plane.build();
+    let tri = util::Triangle::from_mesh(&plane_mesh);
+    let tris = tri.patch(2);
+    // println!("tris {:?}", tris);
 
     // light
     commands.spawn(PointLightBundle {

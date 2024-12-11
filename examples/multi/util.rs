@@ -1,4 +1,6 @@
 use bevy::math::Vec3;
+use bevy::prelude::*;
+use bevy::render::mesh::VertexAttributeValues;
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -8,17 +10,61 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub const fn from(points: Vec<Vec3>, normal: Vec<Vec3>, uv: Vec<Vec3>) -> Triangle {
+    pub fn new(points: Vec<Vec3>, normal: Vec<Vec3>, uv: Vec<Vec3>) -> Triangle {
         Triangle {
             points: points,
             normal: normal,
             uv: uv,
         }
     }
+    
+    pub fn from_mesh(mesh: &Mesh) -> Triangle {
+        // points
+        let points_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_POSITION);
+        let points;
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = points_option {
+            points = vs.clone().iter().map(
+                |v| Vec3::new(v[0], v[1], v[2])
+            )
+            .collect()
+        } else {
+            points = vec![];
+        }
+
+        // normals
+        let normals_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_NORMAL);
+        let normals;
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = normals_option {
+            normals = vs.clone().iter().map(
+                |v| Vec3::new(v[0], v[1], v[2])
+            )
+            .collect()
+        } else {
+            normals = vec![];
+        }
+
+        // normal
+        let uv0s_option: Option<&VertexAttributeValues> = mesh.attribute(Mesh::ATTRIBUTE_UV_0);
+        let uv0s;
+        if let Option::Some(VertexAttributeValues::Float32x3(vs)) = uv0s_option {
+            uv0s = vs.clone().iter().map(
+                |v| Vec3::new(v[0], v[1], v[2])
+            )
+            .collect()
+        } else {
+            uv0s = vec![];
+        }
+        
+        Triangle {
+            points: points,
+            normal: normals,
+            uv: uv0s,
+        }
+    }
 
     pub fn patch(&self, subdivisions: u32) -> Vec<Triangle> {
         if subdivisions == 0 || subdivisions == 1 {
-            return vec![Triangle::from(
+            return vec![Triangle::new(
                 self.points.clone(),
                 self.normal.clone(),
                 self.uv.clone(),
@@ -69,7 +115,7 @@ impl Triangle {
 
                 // uv
                 let new_uv: Vec<Vec3> = uv_tiny.iter().map(|uv| *uv + uv_start).collect();
-                traiangles.push(Triangle::from(new_points, new_normal, new_uv));
+                traiangles.push(Triangle::new(new_points, new_normal, new_uv));
             }
         }
         return traiangles;
@@ -82,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_from() {
-        Triangle::from(
+        Triangle::new(
             vec![
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(0.0, 0.0, 0.0),
@@ -103,7 +149,7 @@ mod tests {
 
     #[test]
     fn test_patch() {
-        let tri = Triangle::from(
+        let tri = Triangle::new(
             vec![
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(0.0, 0.0, 0.0),
