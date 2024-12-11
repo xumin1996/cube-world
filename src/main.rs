@@ -7,6 +7,7 @@ use smooth_bevy_cameras::LookTransformPlugin;
 
 pub mod player;
 pub mod region;
+pub mod util;
 
 fn main() {
     App::new()
