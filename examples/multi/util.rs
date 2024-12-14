@@ -134,7 +134,7 @@ impl Triangle {
 
         // 组合顶点生成mesh
         let mut traiangles: Vec<Triangle> = Vec::new();
-        for index in 0..points.len() {
+        for _ in 0..points.len() {
             let point = points.pop();
             let normal = normals.pop();
             let uv0: Option<Vec<Vec3>> = uv0s.pop();
@@ -158,14 +158,22 @@ impl Triangle {
         let v1_v0_tiny = (point_1 - point_0) / scale;
         let v2_v0_tiny = (point_2 - point_0) / scale;
         let v1_v2_tiny = (point_1 - point_2) / scale;
-        let v2_v1_tiny = (point_1 - point_2) / scale;
         // 三角
         let points_tiny_down: Vec<Vec3> = vec![Vec3::ZERO, v1_v0_tiny, v2_v0_tiny];
-        let points_tiny_up: Vec<Vec3> = vec![Vec3::ZERO, v1_v2_tiny, v2_v1_tiny];
+        let points_tiny_up: Vec<Vec3> = vec![Vec3::ZERO, v1_v2_tiny, v1_v0_tiny];
 
         let mut vec3r: Vec<Vec<Vec3>> = Vec::new();
         for row in 0..num {
             let point_row = v1_v0_tiny * row as f32;
+
+            // 上面的三角形
+            for column in 1..num - row {
+                let point_column = v2_v0_tiny * column as f32;
+                let point_start = point_row + point_column + point_0;
+
+                let new_vec3s = points_tiny_up.iter().map(|p| *p + point_start).collect();
+                vec3r.push(new_vec3s);
+            }
 
             // 下面的三角形
             for column in 0..num - row {
@@ -176,6 +184,9 @@ impl Triangle {
                 vec3r.push(new_vec3s);
             }
         }
+
+        println!("tri {:?}", tri);
+        println!("vec3r {:?}", vec3r);
 
         return vec3r;
     }
@@ -194,12 +205,6 @@ impl Triangle {
             .map(|v3| [v3.x, v3.y, v3.z])
             .collect();
         let uv0_array: Vec<[f32; 2]> = self.uv.into_iter().map(|v3| [v3.x, v3.y]).collect();
-
-        println!("build");
-        println!("points_array {:?}", points_array);
-        println!("normal_array {:?}", normal_array);
-        println!("uv0_array {:?}", uv0_array);
-        println!("indices {:?}", indices);
 
         return Mesh::new(
             PrimitiveTopology::TriangleList,
