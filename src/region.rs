@@ -259,7 +259,7 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
         RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
     )
     .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, attribute_position)
-    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, attribute_uv_0)
     .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, attribute_normal)
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, attribute_uv_0)
     .with_inserted_indices(Indices::U32(indices))
 }

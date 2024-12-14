@@ -20,18 +20,18 @@ pub fn startup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // 平面
-    let plane = Plane3d::default().mesh().size(2f32, 2f32).subdivisions(1);
-    commands.spawn((MaterialMeshBundle {
-        mesh: meshes.add(plane),
-        material: materials.add(Color::WHITE),
-        ..default()
-    },));
-
-    //
+    let plane = Plane3d::default().mesh().size(1f32, 1f32).subdivisions(1);
     let plane_mesh:Mesh = plane.build();
     let tri = util::Triangle::from_mesh(&plane_mesh);
-    let tris = tri.patch(2);
-    // println!("tris {:?}", tris);
+    let mut tris = tri.patch(2);
+    let tri_meshes:Vec<Mesh> = tris.into_iter().map(|it|it.build()).collect();
+    for mesh in tri_meshes {
+        commands.spawn((MaterialMeshBundle {
+            mesh: meshes.add(mesh),
+            material: materials.add(Color::WHITE),
+            ..default()
+        },));
+    }
 
     // light
     commands.spawn(PointLightBundle {
