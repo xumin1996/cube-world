@@ -1,4 +1,6 @@
+use avian3d::parry::na::coordinates::X;
 use bevy::input::mouse::MouseMotion;
+use bevy::render::mesh::VertexAttributeValues;
 use bevy::{
     prelude::*,
     reflect::TypePath,
@@ -21,17 +23,38 @@ pub fn startup(
 ) {
     // 平面
     let plane = Plane3d::default().mesh().size(1f32, 1f32).subdivisions(1);
-    let plane_mesh:Mesh = plane.build();
-    let tri = util::Triangle::from_mesh(&plane_mesh);
-    let mut tris = tri.patch(2);
-    let tri_meshes:Vec<Mesh> = tris.into_iter().map(|it|it.build()).collect();
-    for mesh in tri_meshes {
-        commands.spawn((MaterialMeshBundle {
-            mesh: meshes.add(mesh),
-            material: materials.add(Color::WHITE),
-            ..default()
-        },));
-    }
+    commands.spawn((MaterialMeshBundle {
+        mesh: meshes.add(plane),
+        material: materials.add(Color::WHITE),
+        ..default()
+    },));
+
+    util::Triangle::from_mesh(&plane.build())
+        .patch(3)
+        .into_iter()
+        .map(|it| it.build())
+        .for_each(|item| {
+            if let Option::Some(VertexAttributeValues::Float32x3(vs)) =
+                item.attribute(Mesh::ATTRIBUTE_POSITION)
+            {
+                let center = vs
+                    .iter()
+                    .map(|vsi| Vec3::new(vsi[0], vsi[1], vsi[2]))
+                    .reduce(|a, b| a + b)
+                    .map(|ti| ti / 3f32);
+
+                if let Option::Some(center_point) = center {
+                    commands.spawn(
+                        (MaterialMeshBundle {
+                            mesh: meshes.add(Sphere::new(0.05)),
+                            material: materials.add(Color::WHITE),
+                            transform: Transform::from_xyz(center_point.x, center_point.y, center_point.z),
+                            ..default()
+                        }),
+                    );
+                }
+            }
+        });
 
     // light
     commands.spawn(PointLightBundle {

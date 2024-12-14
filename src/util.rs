@@ -24,7 +24,6 @@ impl Triangle {
 
     pub fn from_mesh(mesh: &Mesh) -> Triangle {
         let indices = mesh.indices().unwrap();
-        println!("indices {:?}", indices);
 
         // points
         let points_option: Option<&VertexAttributeValues> =
@@ -36,7 +35,6 @@ impl Triangle {
                 .map(|it| {
                     if let Option::Some(v) = vs.get(it) {
                         let r = Vec3::new(v[0], v[1], v[2]);
-                        println!("{:?} -> {}", v, r);
                         r
                     } else {
                         Vec3::ZERO
@@ -98,8 +96,6 @@ impl Triangle {
                 self.uv.clone(),
             )];
         }
-
-        println!("self.points {:?}", self.points);
 
         // 分割三角形
         let mut points: Vec<Vec<Vec3>> = self
@@ -185,9 +181,6 @@ impl Triangle {
             }
         }
 
-        println!("tri {:?}", tri);
-        println!("vec3r {:?}", vec3r);
-
         return vec3r;
     }
 
@@ -254,6 +247,5 @@ mod tests {
             ],
         );
         let tris = tri.patch(2);
-        println!("tris {:?}", tris);
     }
 }
