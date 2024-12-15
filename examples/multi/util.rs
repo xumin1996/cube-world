@@ -5,12 +5,13 @@ use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
 use bevy::tasks::futures_lite::io::split;
+use std::ops::Add;
 
 #[derive(Debug)]
 pub struct Triangle {
-    points: Vec<Vec3>,
-    normal: Vec<Vec3>,
-    uv: Vec<Vec3>, // 最后一位是0
+    pub points: Vec<Vec3>,
+    pub normal: Vec<Vec3>,
+    pub uv: Vec<Vec3>, // 最后一位是0
 }
 
 impl Triangle {
@@ -185,7 +186,8 @@ impl Triangle {
     }
 
     pub fn build(self) -> Mesh {
-        let indices: Vec<u32> = vec![0, 1, 2];
+        let points_len = self.points.len() as u32;
+        let indices: Vec<u32> = (0..points_len).collect();
 
         let points_array: Vec<[f32; 3]> = self
             .points
@@ -207,6 +209,26 @@ impl Triangle {
         .with_inserted_attribute(Mesh::ATTRIBUTE_NORMAL, normal_array)
         .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uv0_array)
         .with_inserted_indices(Indices::U32(indices));
+    }
+}
+
+impl Add<Triangle> for Triangle {
+    type Output = Self;
+    #[inline]
+    fn add(self, rhs: Self) -> Self {
+        let mut new_points = Vec::new();
+        let mut new_normals = Vec::new();
+        let mut new_uv0s = Vec::new();
+
+        new_points.extend(rhs.points);
+        new_normals.extend(rhs.normal);
+        new_uv0s.extend(rhs.uv);
+
+        Triangle {
+            points: new_points,
+            normal: new_normals,
+            uv: new_uv0s,
+        }
     }
 }
 

@@ -20,57 +20,50 @@ pub fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     // 平面
     let plane = Plane3d::default().mesh().size(1f32, 1f32).subdivisions(1);
-    commands.spawn((MaterialMeshBundle {
-        mesh: meshes.add(plane),
-        material: materials.add(Color::WHITE),
-        ..default()
-    },));
+    commands.spawn((
+        Mesh3d(meshes.add(plane)),
+        MeshMaterial3d(materials.add(Color::WHITE)),
+    ));
 
+    // let grass_obj = asset_server.load::<Mesh>("models/grass.obj");
     util::Triangle::from_mesh(&plane.build())
         .patch(3)
         .into_iter()
-        .map(|it| it.build())
         .for_each(|item| {
-            if let Option::Some(VertexAttributeValues::Float32x3(vs)) =
-                item.attribute(Mesh::ATTRIBUTE_POSITION)
-            {
-                let center = vs
-                    .iter()
-                    .map(|vsi| Vec3::new(vsi[0], vsi[1], vsi[2]))
-                    .reduce(|a, b| a + b)
-                    .map(|ti| ti / 3f32);
+            let center = item
+                .points
+                .iter()
+                .map(|vsi| Vec3::new(vsi[0], vsi[1], vsi[2]))
+                .reduce(|a, b| a + b)
+                .map(|ti| ti / 3f32);
 
-                if let Option::Some(center_point) = center {
-                    commands.spawn(
-                        (MaterialMeshBundle {
-                            mesh: meshes.add(Sphere::new(0.05)),
-                            material: materials.add(Color::WHITE),
-                            transform: Transform::from_xyz(center_point.x, center_point.y, center_point.z),
-                            ..default()
-                        }),
-                    );
-                }
+            if let Option::Some(center_point) = center {
+                commands.spawn((
+                    Mesh3d(meshes.add(Sphere::new(0.05))),
+                    MeshMaterial3d(materials.add(Color::WHITE)),
+                    Transform::from_xyz(center_point.x, center_point.y, center_point.z),
+                ));
             }
         });
 
     // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
+        Transform::from_xyz(4.0, 8.0, 4.0),
+    ));
 
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 }
 
 pub fn handle_mouse_motion(
