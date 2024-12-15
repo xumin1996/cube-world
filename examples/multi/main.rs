@@ -35,7 +35,7 @@ pub fn startup(
 
     let grass_obj = asset_server.load::<Mesh>("models/grass.obj");
     util::Triangle::from_mesh(&plane.build())
-        .patch(3)
+        .patch(5)
         .into_iter()
         .for_each(|item| {
             let center = item

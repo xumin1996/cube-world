@@ -5,7 +5,7 @@ use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
 use bevy::tasks::futures_lite::io::split;
-use std::ops::Add;
+use std::ops::{Add, Mul};
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -228,6 +228,25 @@ impl Add<Triangle> for Triangle {
             points: new_points,
             normal: new_normals,
             uv: new_uv0s,
+        }
+    }
+}
+
+impl Mul<Transform> for Triangle {
+    type Output = Triangle;
+    #[inline]
+    fn mul(self, trans: Transform) -> Triangle {
+        let points = self.points.iter().map(
+            |it: &Vec3| {
+                trans.transform_point(it)
+            }
+        )
+        .collect();
+
+        Triangle {
+            points: points,
+            normal: self.normal,
+            uv: self.uv,
         }
     }
 }
