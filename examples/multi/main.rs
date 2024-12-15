@@ -1,3 +1,5 @@
+use core::f32;
+
 use avian3d::parry::na::coordinates::X;
 use bevy::input::mouse::MouseMotion;
 use bevy::render::mesh::VertexAttributeValues;
@@ -6,11 +8,13 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use bevy_obj::ObjPlugin;
+
 pub mod util;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins))
+        .add_plugins((DefaultPlugins, ObjPlugin))
         .add_systems(Startup, startup)
         .add_systems(Update, handle_mouse_motion)
         .run();
@@ -29,7 +33,7 @@ pub fn startup(
         MeshMaterial3d(materials.add(Color::WHITE)),
     ));
 
-    // let grass_obj = asset_server.load::<Mesh>("models/grass.obj");
+    let grass_obj = asset_server.load::<Mesh>("models/grass.obj");
     util::Triangle::from_mesh(&plane.build())
         .patch(3)
         .into_iter()
@@ -43,9 +47,18 @@ pub fn startup(
 
             if let Option::Some(center_point) = center {
                 commands.spawn((
-                    Mesh3d(meshes.add(Sphere::new(0.05))),
+                    Mesh3d(grass_obj.clone()),
                     MeshMaterial3d(materials.add(Color::WHITE)),
-                    Transform::from_xyz(center_point.x, center_point.y, center_point.z),
+                    Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                    .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                    .with_rotation(Quat::from_rotation_x(f32::consts::FRAC_PI_2)),
+                ));
+                commands.spawn((
+                    Mesh3d(grass_obj.clone()),
+                    MeshMaterial3d(materials.add(Color::WHITE)),
+                    Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                    .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                    .with_rotation(Quat::from_rotation_x(f32::consts::FRAC_PI_2) * Quat::from_rotation_z(f32::consts::PI) ),
                 ));
             }
         });
@@ -62,7 +75,7 @@ pub fn startup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(1.5, 1.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
