@@ -238,7 +238,7 @@ impl Mul<Transform> for Triangle {
     fn mul(self, trans: Transform) -> Triangle {
         let points = self.points.iter().map(
             |it: &Vec3| {
-                trans.transform_point(it)
+                trans.transform_point(*it)
             }
         )
         .collect();
