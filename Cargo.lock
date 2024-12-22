@@ -423,6 +423,7 @@ dependencies = [
  "bevy-tnua-avian3d",
  "bevy-tnua-physics-integration-layer",
  "bevy_obj",
+ "rand",
  "simdnoise",
  "smooth-bevy-cameras",
 ]

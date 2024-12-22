@@ -1,5 +1,3 @@
-use core::f32;
-
 use avian3d::parry::na::coordinates::X;
 use bevy::input::mouse::MouseMotion;
 use bevy::render::mesh::VertexAttributeValues;
@@ -9,6 +7,9 @@ use bevy::{
     render::render_resource::{AsBindGroup, ShaderRef},
 };
 use bevy_obj::ObjPlugin;
+use core::f32;
+use rand::Rng;
+use util::Triangle;
 
 pub mod util;
 
@@ -37,12 +38,13 @@ pub fn startup(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(0.2, 0.2, 0.2))),
         MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_xyz(0.0, 0.5, 0.0)
+        Transform::from_xyz(0.0, 0.5, 0.0),
     ));
 
-    let grass_obj = asset_server.load::<Mesh>("models/grass.obj");
+    let mut rng = rand::thread_rng();
+    let grass_obj: Handle<Mesh> = asset_server.load::<Mesh>("models/grass.obj");
     util::Triangle::from_mesh(&plane.build())
-        .patch(3)
+        .patch(10)
         .into_iter()
         .for_each(|item| {
             let center = item
@@ -53,33 +55,52 @@ pub fn startup(
                 .map(|ti| ti / 3f32);
 
             if let Option::Some(center_point) = center {
-                commands.spawn((
-                    Mesh3d(grass_obj.clone()),
-                    MeshMaterial3d(materials.add(
-                        StandardMaterial {
+                let rotate = rng.gen_range(0.0..f32::consts::PI);
+                if let Option::Some(mesh) = meshes.get(grass_obj.id()) {
+                    let tt = Triangle::from_mesh(mesh);
+                    println!("tt {:?}", tt);
+                    commands.spawn((
+                        Mesh3d(meshes.add(tt.build())),
+                        MeshMaterial3d(materials.add(StandardMaterial {
                             base_color: Color::WHITE,
                             unlit: true,
-                           ..default()
-                        }
-                    )),
-                    Transform::from_xyz(center_point.x, center_point.y, center_point.z)
-                    .with_scale(Vec3::new(0.01, 0.01, 0.01))
-                    .with_rotation(Quat::from_rotation_x(f32::consts::FRAC_PI_2)),
-                ));
-                commands.spawn((
-                    Mesh3d(grass_obj.clone()),
-                    MeshMaterial3d(materials.add(
-                        
-                        StandardMaterial {
-                            base_color: Color::WHITE,
-                            unlit: true,
-                           ..default()
-                        }
-                    )),
-                    Transform::from_xyz(center_point.x, center_point.y, center_point.z)
-                    .with_scale(Vec3::new(0.01, 0.01, 0.01))
-                    .with_rotation(Quat::from_rotation_x(f32::consts::FRAC_PI_2) * Quat::from_rotation_z(f32::consts::PI) ),
-                ));
+                            ..default()
+                        })),
+                        Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                            .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                            .with_rotation(
+                                Quat::from_rotation_y(rotate)
+                                    * Quat::from_rotation_x(f32::consts::FRAC_PI_2),
+                            ),
+                    ));
+                }
+                // commands.spawn((
+                //     Mesh3d(grass_obj.clone()),
+                //     MeshMaterial3d(materials.add(
+                //         StandardMaterial {
+                //             base_color: Color::WHITE,
+                //             unlit: true,
+                //            ..default()
+                //         }
+                //     )),
+                //     Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                //     .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                //     .with_rotation(Quat::from_rotation_y(rotate)*Quat::from_rotation_x(f32::consts::FRAC_PI_2) ),
+                // ));
+                // commands.spawn((
+                //     Mesh3d(grass_obj.clone()),
+                //     MeshMaterial3d(materials.add(
+
+                //         StandardMaterial {
+                //             base_color: Color::WHITE,
+                //             unlit: true,
+                //            ..default()
+                //         }
+                //     )),
+                //     Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                //     .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                //     .with_rotation(Quat::from_rotation_y(rotate)*Quat::from_rotation_x(f32::consts::FRAC_PI_2) * Quat::from_rotation_z(f32::consts::PI)),
+                // ));
             }
         });
 
