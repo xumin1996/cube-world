@@ -54,9 +54,9 @@ pub fn startup(
                 .reduce(|a, b| a + b)
                 .map(|ti| ti / 3f32);
 
-            if let Option::Some(center_point) = center {
+            if let Some(center_point) = center {
                 let rotate = rng.gen_range(0.0..f32::consts::TAU);
-                if let Option::Some(mesh) = meshes.get(grass_obj.id()) {
+                if let Option::Some(mesh) = meshes.get_mut(&grass_obj) {
                     let tt = Triangle::from_mesh(mesh);
                     println!("tt {:?}", tt);
                     commands.spawn((
@@ -73,20 +73,23 @@ pub fn startup(
                                     * Quat::from_rotation_x(f32::consts::FRAC_PI_2),
                             ),
                     ));
+                    panic!("okokok");
+                } else {
+                    panic!("no");
                 }
-                commands.spawn((
-                    Mesh3d(grass_obj.clone()),
-                    MeshMaterial3d(materials.add(
-                        StandardMaterial {
-                            base_color: Color::WHITE,
-                            unlit: true,
-                           ..default()
-                        }
-                    )),
-                    Transform::from_xyz(center_point.x, center_point.y, center_point.z)
-                    .with_scale(Vec3::new(0.01, 0.01, 0.01))
-                    .with_rotation(Quat::from_rotation_y(rotate)*Quat::from_rotation_x(f32::consts::FRAC_PI_2) ),
-                ));
+                // commands.spawn((
+                //     Mesh3d(grass_obj.clone()),
+                //     MeshMaterial3d(materials.add(
+                //         StandardMaterial {
+                //             base_color: Color::WHITE,
+                //             unlit: true,
+                //            ..default()
+                //         }
+                //     )),
+                //     Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+                //     .with_scale(Vec3::new(0.01, 0.01, 0.01))
+                //     .with_rotation(Quat::from_rotation_y(rotate)*Quat::from_rotation_x(f32::consts::FRAC_PI_2) ),
+                // ));
             }
         });
 
