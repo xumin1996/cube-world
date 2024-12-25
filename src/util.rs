@@ -221,8 +221,11 @@ impl Add<Triangle> for Triangle {
         let mut new_uv0s = Vec::new();
 
         new_points.extend(rhs.points);
+        new_points.extend(self.points);
         new_normals.extend(rhs.normal);
+        new_normals.extend(self.normal);
         new_uv0s.extend(rhs.uv);
+        new_uv0s.extend(self.uv);
 
         Triangle {
             points: new_points,
@@ -236,17 +239,94 @@ impl Mul<Transform> for Triangle {
     type Output = Triangle;
     #[inline]
     fn mul(self, trans: Transform) -> Triangle {
-        let points = self.points.iter().map(
-            |it: &Vec3| {
-                trans.transform_point(*it)
-            }
-        )
-        .collect();
+        let points: Vec<Vec3> = self
+            .points
+            .iter()
+            .map(|it: &Vec3| trans.transform_point(*it))
+            .collect();
 
         Triangle {
             points: points,
             normal: self.normal,
             uv: self.uv,
+        }
+    }
+}
+
+impl Mul<Vec<Transform>> for Triangle {
+    type Output = Triangle;
+    #[inline]
+    fn mul(self, transforms: Vec<Transform>) -> Triangle {
+        let mut points = Vec::new();
+        let mut normal = Vec::new();
+        let mut uv = Vec::new();
+        for transform in transforms {
+            let t_points: Vec<Vec3> = self
+                .points
+                .iter()
+                .map(|it: &Vec3| transform.transform_point(*it))
+                .collect();
+            points.extend(t_points);
+            normal.extend(self.normal.clone());
+            uv.extend(self.uv.clone());
+        }
+
+        Triangle {
+            points: points,
+            normal: normal,
+            uv: uv,
+        }
+    }
+}
+
+impl Triangle {
+    pub fn pieces(num: u32) -> Triangle {
+        let mut points: Vec<Vec3> = Vec::new();
+        let t_points: Vec<Vec3> = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.01, 0.01, 0.0),
+            Vec3::new(0.0, 0.01, 0.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.01, 0.0, 0.0),
+            Vec3::new(0.01, 0.01, 0.0),
+        ];
+        for i in 0..num {
+            let new_points: Vec<Vec3> = t_points
+                .iter()
+                .map(|vec3| vec3 + Vec3::new(0.0, 0.01 * i as f32, 0.0))
+                .collect();
+
+            points.extend(new_points);
+        }
+
+        let mut normal: Vec<Vec3> = Vec::new();
+        for i in 0..num {
+            normal.extend(vec![
+                Vec3::new(0.0, 0.0, 1.0),
+                Vec3::new(0.0, 0.0, 1.0),
+                Vec3::new(0.0, 0.0, 1.0),
+                Vec3::new(0.0, 0.0, 1.0),
+                Vec3::new(0.0, 0.0, 1.0),
+                Vec3::new(0.0, 0.0, 1.0),
+            ]);
+        }
+
+        let mut uv: Vec<Vec3> = Vec::new();
+        for i in 0..num {
+            uv.extend(vec![
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 0.0),
+            ]);
+        }
+
+        Triangle {
+            points: points,
+            normal: normal,
+            uv: uv,
         }
     }
 }

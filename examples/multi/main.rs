@@ -41,57 +41,66 @@ pub fn startup(
         Transform::from_xyz(0.0, 0.5, 0.0),
     ));
 
+    // 均匀的草地
     let mut rng = rand::thread_rng();
-    let grass_obj: Handle<Mesh> = asset_server.load::<Mesh>("models/grass.obj");
-    util::Triangle::from_mesh(&plane.build())
-        .patch(10)
-        .into_iter()
-        .for_each(|item| {
-            let center = item
-                .points
-                .iter()
-                .map(|vsi| Vec3::new(vsi[0], vsi[1], vsi[2]))
-                .reduce(|a, b| a + b)
-                .map(|ti| ti / 3f32);
+    // let grass_tris: Option<Triangle> = util::Triangle::from_mesh(&plane.build())
+    //     .patch(10)
+    //     .into_iter()
+    //     .map(|item| {
+    //         // 计算中心点
+    //         let center = item
+    //             .points
+    //             .iter()
+    //             .map(|vsi| Vec3::new(vsi[0], vsi[1], vsi[2]))
+    //             .reduce(|a, b| a + b)
+    //             .map(|ti| ti / 3f32);
 
-            if let Some(center_point) = center {
-                let rotate = rng.gen_range(0.0..f32::consts::TAU);
-                if let Option::Some(mesh) = meshes.get_mut(&grass_obj) {
-                    let tt = Triangle::from_mesh(mesh);
-                    println!("tt {:?}", tt);
-                    commands.spawn((
-                        Mesh3d(meshes.add(tt.build())),
-                        MeshMaterial3d(materials.add(StandardMaterial {
-                            base_color: Color::WHITE,
-                            unlit: true,
-                            ..default()
-                        })),
-                        Transform::from_xyz(center_point.x, center_point.y, center_point.z)
-                            .with_scale(Vec3::new(0.01, 0.01, 0.01))
-                            .with_rotation(
-                                Quat::from_rotation_y(rotate)
-                                    * Quat::from_rotation_x(f32::consts::FRAC_PI_2),
-                            ),
-                    ));
-                    panic!("okokok");
-                } else {
-                    panic!("no");
-                }
-                // commands.spawn((
-                //     Mesh3d(grass_obj.clone()),
-                //     MeshMaterial3d(materials.add(
-                //         StandardMaterial {
-                //             base_color: Color::WHITE,
-                //             unlit: true,
-                //            ..default()
-                //         }
-                //     )),
-                //     Transform::from_xyz(center_point.x, center_point.y, center_point.z)
-                //     .with_scale(Vec3::new(0.01, 0.01, 0.01))
-                //     .with_rotation(Quat::from_rotation_y(rotate)*Quat::from_rotation_x(f32::consts::FRAC_PI_2) ),
-                // ));
-            }
-        });
+    //         // 随即旋转
+    //         let rotate = rng.gen_range(0.0..f32::consts::TAU);
+
+    //         if let Some(center_point) = center {
+    //             let grass: Triangle = Triangle::pieces(5)
+    //                 * Transform::from_xyz(center_point.x, center_point.y, center_point.z)
+    //                     .with_rotation(Quat::from_rotation_y(rotate));
+    //             return Some(grass);
+    //         }
+    //         None
+    //     })
+    //     .filter(|i| i.is_some())
+    //     .map(|i| i.unwrap())
+    //     .reduce(|a: Triangle, b: Triangle| a + b);
+
+    // if let Some(grass_tri) = grass_tris {
+    //     commands.spawn((
+    //         Mesh3d(meshes.add(grass_tri.build())),
+    //         MeshMaterial3d(materials.add(StandardMaterial {
+    //             base_color: Color::WHITE,
+    //             unlit: true,
+    //             ..default()
+    //         })),
+    //     ));
+    // }
+
+    // 随机草地
+    let mut rng = rand::thread_rng();
+    let offsets: Vec<Transform> = (0..1000000)
+        .map(|i| {
+            let offset_x = rng.gen_range(-0.5..0.5);
+            let offset_z = rng.gen_range(-0.5..0.5);
+            let rotate = rng.gen_range(0.0..f32::consts::TAU);
+            Transform::from_xyz(offset_x, 0.0, offset_z)
+                .with_rotation(Quat::from_rotation_y(rotate))
+        })
+        .collect();
+    let ts = Triangle::pieces(5) * offsets;
+    commands.spawn((
+        Mesh3d(meshes.add(ts.build())),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::WHITE,
+            // unlit: true,
+            ..default()
+        })),
+    ));
 
     // light
     commands.spawn((
