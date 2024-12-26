@@ -22,25 +22,21 @@ pub fn setup(
         TnuaControllerBundle::default(),
         RigidBody::Dynamic,
         Collider::cuboid(0.2, 0.2, 0.2),
-        PbrBundle {
-            mesh: meshes.add(Cuboid::new(0.7, 0.7, 0.7)),
-            material: materials.add(Color::WHITE),
-            transform: Transform::from_xyz(5.0, 100.0, 5.0),
-            ..default()
-        },
+        Mesh3d(meshes.add(Cuboid::new(0.7, 0.7, 0.7))),
+        MeshMaterial3d(materials.add(Color::WHITE)),
+        Transform::from_xyz(5.0, 100.0, 5.0),
         Player,
     ));
 
     // 点光源
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             shadows_enabled: true,
             range: 100.0,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 10.0, 4.0),
-        ..default()
-    });
+        Transform::from_xyz(4.0, 10.0, 4.0),
+    ));
 
     // 平滑摄像机
     let camera_at = CameraLookAt {
@@ -48,10 +44,10 @@ pub fn setup(
     };
     commands.insert_resource(camera_at);
     commands
-        .spawn(LookTransformBundle {
-            transform: LookTransform::new(Vec3::ZERO, Vec3::ZERO, Vec3::Y),
-            smoother: Smoother::new(0.9),
-        })
+        .spawn((
+            LookTransform::new(Vec3::ZERO, Vec3::ZERO, Vec3::Y),
+            Smoother::new(0.9),
+        ))
         .insert(Camera3dBundle::default());
 }
 
@@ -141,11 +137,11 @@ pub fn handle_light(
         player_position.translation.y + 5f32,
         player_position.translation.z,
     );
-    
-    gizmos.sphere(
-        point_light_transform.single_mut().translation,
-        Quat::from_rotation_x(0f32),
-        point_light.single().range,
-        Color::srgb(1.0, 0f32, 0f32),
-    );
+
+    // gizmos.sphere(
+    //     point_light_transform.single_mut().translation,
+    //     Quat::from_rotation_x(0f32),
+    //     point_light.single().range,
+    //     Color::srgb(1.0, 0f32, 0f32),
+    // );
 }

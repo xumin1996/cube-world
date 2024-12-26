@@ -46,11 +46,8 @@ pub fn startup(
                     block_y: 0,
                     block_z: region_z,
                 },
-                PbrBundle {
-                    mesh: meshes.add(plain_height),
-                    material: cube_material.clone(),
-                    ..default()
-                },
+                Mesh3d(meshes.add(plain_height)),
+                MeshMaterial3d(cube_material.clone()),
             ));
         }
     }
@@ -145,11 +142,8 @@ pub fn region_update(
                         block_y: 0,
                         block_z: region_z,
                     },
-                    PbrBundle {
-                        mesh: meshes.add(plain_height),
-                        material: cube_material.clone(),
-                        ..default()
-                    },
+                    Mesh3d(meshes.add(plain_height)),
+                    MeshMaterial3d(cube_material.clone()),
                 ));
             }
         }
