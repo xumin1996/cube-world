@@ -19,27 +19,25 @@ pub fn startup(
     mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
     // 方块
-    commands.spawn((MaterialMeshBundle {
-        mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-        material: materials.add(CustomMaterial {}),
-        ..default()
-    },));
+    commands.spawn((
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(CustomMaterial {})),
+    ));
 
     // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
+        Transform::from_xyz(4.0, 8.0, 4.0),
+    ));
 
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 }
 
 pub fn handle_mouse_motion(
@@ -60,6 +58,9 @@ pub fn handle_mouse_motion(
 struct CustomMaterial {}
 
 impl Material for CustomMaterial {
+    fn vertex_shader() -> ShaderRef {
+        "shaders/animate_shader.wgsl".into()
+    }
     fn fragment_shader() -> ShaderRef {
         "shaders/animate_shader.wgsl".into()
     }
