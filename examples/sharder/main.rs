@@ -58,9 +58,9 @@ pub fn handle_mouse_motion(
 struct CustomMaterial {}
 
 impl Material for CustomMaterial {
-    fn vertex_shader() -> ShaderRef {
-        "shaders/animate_shader.wgsl".into()
-    }
+    // fn vertex_shader() -> ShaderRef {
+    //     "shaders/animate_shader.wgsl".into()
+    // }
     fn fragment_shader() -> ShaderRef {
         "shaders/animate_shader.wgsl".into()
     }

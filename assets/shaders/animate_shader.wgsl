@@ -1,45 +1,54 @@
-// The time since startup data is in the globals binding which is part of the mesh_view_bindings import
-#import bevy_pbr::{
-    mesh_view_bindings::globals,
-    forward_io::VertexOutput,
+#import bevy_pbr::forward_io::{VertexOutput, FragmentOutput};
+#import bevy_pbr::mesh_view_bindings::globals
+#import bevy_render::view::View
+
+/// Keep up-to-date with the rust definition!
+struct AuraMaterial {
+    unused: f32,
 }
 
-fn oklab_to_linear_srgb(c: vec3<f32>) -> vec3<f32> {
-    let L = c.x;
-    let a = c.y;
-    let b = c.z;
+@group(0) @binding(0)   var<uniform> view: View;
+@group(2) @binding(100) var<uniform> aura_mat: AuraMaterial;
 
-    let l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-    let m_ = L - 0.1055613458 * a - 0.0638541728 * b;
-    let s_ = L - 0.0894841775 * a - 1.2914855480 * b;
-
-    let l = l_ * l_ * l_;
-    let m = m_ * m_ * m_;
-    let s = s_ * s_ * s_;
-
-    return vec3<f32>(
-        4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-        -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-        -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
-    );
-}
+// Colour picker tells us the values of the original..
+// Darkish
+// #CEAA4F
+const GOLD = vec3f(0.807843, 0.666667, 0.309804);
+const SPIKE_NUM: f32 = 9.0;
+const SPIKE_LEN: f32 = 1.68;
+const SPIKE_SPEED:f32 = 32.0;
+const PI: f32 =  3.141592653589;
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
-    let speed = 2.0;
-    // The globals binding contains various global values like time
-    // which is the time since startup in seconds
-    let t_1 = sin(globals.time * speed) * 0.5 + 0.5;
-    let t_2 = cos(globals.time * speed);
+    var uv = in.uv;
+    uv = uv * 2.0 - 1.0;
+    let x =(atan2(uv.x, uv.y) / PI + 1) * SPIKE_NUM; // Divide the x coords by PI so they line up perfectly.
 
-    let distance_to_center = distance(in.uv, vec2<f32>(0.5)) * 1.4;
+    // 计算光针边缘
+    let f_x = fract(x);
+    var m = min(f_x, 1.0 - f_x);
+    m = m * SPIKE_LEN - length(uv);
+    
+    // 计算当前像素值:
+    var c = smoothstep( 0.9, 0.0, m / 0.5);
+    var col = vec3f(c);
 
-    // blending is done in a perceptual color space: https://bottosson.github.io/posts/oklab/
-    let red = vec3<f32>(0.627955, 0.224863, 0.125846);
-    let green = vec3<f32>(0.86644, -0.233887, 0.179498);
-    let blue = vec3<f32>(0.701674, 0.274566, -0.169156);
-    let white = vec3<f32>(1.0, 0.0, 0.0);
-    let mixed = mix(mix(red, blue, t_1), mix(green, white, t_2), distance_to_center);
+    // 全局时间计算指针位置
+    let time = globals.time;
+    let time_circle_index = 0.0;//floor(time * SPIKE_SPEED) % (SPIKE_NUM * 2.0);
+    let is_focused_spike = step(0.5, abs(time_circle_index - x));
+    col *= mix(GOLD / 0.15, GOLD * 0.54, is_focused_spike);
 
-    return vec4<f32>(oklab_to_linear_srgb(mixed), 1.0);
+    // 不显示中间
+    let feet_mask = sdCircle(uv, 0.25);
+    col *= smoothstep(0.0, 0.09, feet_mask);
+
+    // 输出
+    var out = vec4f(col, 1.0);
+    return out;
+}
+
+fn sdCircle(p: vec2f, r: f32) -> f32 {
+    return length(p) - r;
 }
