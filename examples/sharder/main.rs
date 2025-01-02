@@ -4,6 +4,7 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use std::f32::consts::FRAC_PI_2;
 
 fn main() {
     App::new()
@@ -22,6 +23,13 @@ pub fn startup(
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(CustomMaterial {})),
+    ));
+
+    // 平面
+    commands.spawn((
+        Mesh3d(meshes.add(Plane3d::new(Vec3::new(0.0, 0.0, 1.0), Vec2::new(1.0, 1.0)))),
+        MeshMaterial3d(materials.add(CustomMaterial {})),
+        Transform::from_rotation(Quat::from_rotation_x(FRAC_PI_2)),
     ));
 
     // light

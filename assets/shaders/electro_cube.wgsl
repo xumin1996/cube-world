@@ -1,9 +1,7 @@
 #import bevy_pbr::mesh_view_bindings::globals
 #import bevy_sprite::mesh2d_vertex_output::VertexOutput
-#import bevy_pbr::utils::PI
 
 const GRID_RATIO:f32 = 40.;
-
 
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -33,11 +31,8 @@ fn palette(time : f32) -> vec3<f32> {
 fn grid(uv: vec2<f32>)-> f32 {
     let i = step(fract(uv), vec2(1.0/GRID_RATIO));
     return (1.1-i.x) * (0.005+i.y);
-    
 }
 
-
-// License: WTFPL, author: sam hocevar, found: https://stackoverflow.com/a/17897228/418488
 fn hsv2rgb(c: vec3<f32>) -> vec3<f32> {
     let K: vec4<f32> = vec4<f32>(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     var p: vec3<f32> = abs(fract(vec3<f32>(c.x) + K.xyz) * 6.0 - K.www);
