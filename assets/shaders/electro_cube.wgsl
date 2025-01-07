@@ -9,7 +9,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     var uv = in.uv - 0.5;
     var col = vec3(0.0);
 
-    uv *=  GRID_RATIO / 5.;
+    uv *= 10.;
     let grid = grid(uv);
     let pal = palette(t / 2. );
     col = mix(col, pal, grid);
@@ -17,7 +17,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(col, 1.0);
 }
 
-// I disklike boring colours, this paticular function comes from Kishimisu (see the wgsl file of same name to explore more of her/his/their ideas.)
+// 变幻彩色
 fn palette(time : f32) -> vec3<f32> {
     let a = vec3<f32>(0.5, 0.5, 0.5);
     let b = vec3<f32>(0.5, 0.5, 0.5);
@@ -27,10 +27,10 @@ fn palette(time : f32) -> vec3<f32> {
     return a + b * cos(6.28318 * (c * time + d));
 }
 
-// inspired by https://www.shadertoy.com/view/Wt33Wf & https://www.shadertoy.com/view/XtBfzz
+// 显示网格
 fn grid(uv: vec2<f32>)-> f32 {
     let i = step(fract(uv), vec2(1.0/GRID_RATIO));
-    return (1.1-i.x) * (0.005+i.y);
+    return max(i.x, i.y);
 }
 
 fn hsv2rgb(c: vec3<f32>) -> vec3<f32> {

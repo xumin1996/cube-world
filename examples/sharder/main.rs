@@ -26,11 +26,11 @@ pub fn startup(
     ));
 
     // 平面
-    commands.spawn((
-        Mesh3d(meshes.add(Plane3d::new(Vec3::new(0.0, 0.0, 1.0), Vec2::new(1.0, 1.0)))),
-        MeshMaterial3d(materials.add(CustomMaterial {})),
-        Transform::from_rotation(Quat::from_rotation_x(FRAC_PI_2)),
-    ));
+    // commands.spawn((
+    //     Mesh3d(meshes.add(Plane3d::new(Vec3::new(0.0, 1.0, 0.0), Vec2::new(1.0, 1.0)))),
+    //     MeshMaterial3d(materials.add(CustomMaterial {})),
+    //     Transform::from_xyz(0.0, 0.5, 0.0).with_rotation(Quat::from_rotation_x(FRAC_PI_2)),
+    // ));
 
     // light
     commands.spawn((
@@ -44,7 +44,7 @@ pub fn startup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(3.0, 2.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(3.0, 1.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
@@ -70,6 +70,6 @@ impl Material for CustomMaterial {
     //     "shaders/animate_shader.wgsl".into()
     // }
     fn fragment_shader() -> ShaderRef {
-        "shaders/electro_cube.wgsl".into()
+        "shaders/fast_dots.wgsl".into()
     }
 }
