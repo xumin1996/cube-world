@@ -312,14 +312,17 @@ impl Triangle {
         }
 
         let mut uv: Vec<Vec3> = Vec::new();
+        let per_uv_length = 1.0 / num as f32;
         for i in 0..num {
+            let feet: f32 = per_uv_length * i as f32;
+            let head: f32 = per_uv_length * (i+1) as f32;
             uv.extend(vec![
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, feet, 0.0),
+                Vec3::new(1.0, head, 0.0),
+                Vec3::new(0.0, head, 0.0),
+                Vec3::new(0.0, feet, 0.0),
+                Vec3::new(1.0, feet, 0.0),
+                Vec3::new(1.0, head, 0.0),
             ]);
         }
 

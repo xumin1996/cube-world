@@ -70,6 +70,6 @@ impl Material for CustomMaterial {
     //     "shaders/animate_shader.wgsl".into()
     // }
     fn fragment_shader() -> ShaderRef {
-        "shaders/fast_dots.wgsl".into()
+        "shaders/animate_shader.wgsl".into()
     }
 }
