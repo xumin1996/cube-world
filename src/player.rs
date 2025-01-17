@@ -2,7 +2,7 @@ use avian3d::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
-use smooth_bevy_cameras::{LookTransform, LookTransformBundle, Smoother};
+use smooth_bevy_cameras::{LookTransform, Smoother};
 
 #[derive(Component)]
 pub struct Player;

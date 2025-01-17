@@ -8,6 +8,7 @@ use smooth_bevy_cameras::LookTransformPlugin;
 pub mod player;
 pub mod region;
 pub mod util;
+pub mod customMaterial;
 
 fn main() {
     App::new()
@@ -15,7 +16,7 @@ fn main() {
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "A Cool Title".into(),
-                    resolution: (300., 300.).into(),
+                    resolution: (512., 512.).into(),
                     resizable: true,
                     decorations: true,
                     ..default()
@@ -28,6 +29,7 @@ fn main() {
             TnuaAvian3dPlugin::new(FixedUpdate),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
+            MaterialPlugin::<customMaterial::CustomMaterial>::default(),
         ))
         .add_systems(Startup, (player::setup, region::startup))
         .add_systems(

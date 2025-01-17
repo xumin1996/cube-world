@@ -8,7 +8,7 @@ use std::f32::consts::FRAC_PI_2;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, MaterialPlugin::<CustomMaterial>::default()))
+        .add_plugins((DefaultPlugins,    MaterialPlugin::<CustomMaterial>::default()))
         .add_systems(Startup, startup)
         .add_systems(Update, handle_mouse_motion)
         .run();

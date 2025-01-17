@@ -1,4 +1,4 @@
-use super::player::Player;
+use super::{player::Player, customMaterial::CustomMaterial};
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy::render::{
@@ -24,6 +24,7 @@ pub fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
     // 角色所在区块
     let player_region_x = 0i32;
@@ -35,7 +36,7 @@ pub fn startup(
     );
 
     // view地形 默认加载周围25(5*5)个区块
-    let cube_material = materials.add(Color::WHITE);
+    let cube_material = custom_materials.add(CustomMaterial{});
     for region_x in player_region_x - 2..=player_region_x + 2 {
         for region_z in player_region_z - 2..=player_region_z + 2 {
             println!("setup add view x: {}, z: {}", region_x, region_z);
@@ -74,6 +75,7 @@ pub fn region_update(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut custom_materials: ResMut<Assets<CustomMaterial>>,
     player_position_query: Query<&Transform, With<Player>>,
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
@@ -124,7 +126,7 @@ pub fn region_update(
     }
 
     // view地形 默认加载周围25(5*5)个区块
-    let cube_material = materials.add(Color::WHITE);
+    let cube_material = custom_materials.add(CustomMaterial{});
     for region_x in player_region_x - view_circle..=player_region_x + view_circle {
         for region_z in player_region_z - view_circle..=player_region_z + view_circle {
             // 检查是否已经存在
@@ -192,8 +194,8 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
     )
     .with_seed(1)
     .generate();
-    let heights: Vec<f32> = heights.iter().map(|item| item * 500f32).collect();
-    let mut plain_height: Vec<Vec<f32>> = heights
+    let heights: Vec<f32> = heights.iter().map(|item| item * 50f32).collect();
+    let plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
         .map(|chunk| {
             let mut rv = chunk.to_vec();
@@ -213,6 +215,7 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
 
 // 创建平面网格 (16+1)*(16+1) x,y
 fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
+    let plain_size = 16i32;
     let mut attribute_position: Vec<[f32; 3]> = Vec::new();
     let mut attribute_uv_0: Vec<[f32; 2]> = Vec::new();
     let mut attribute_normal: Vec<[f32; 3]> = Vec::new();
@@ -228,7 +231,7 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
             attribute_position.push([x, y, z]);
 
             // uv
-            let uv_size = 1f32 / 16f32;
+            let uv_size = 1f32 / plain_size as f32;
             attribute_uv_0.push([uv_size * x_index as f32, uv_size * z_index as f32]);
 
             // 法线
