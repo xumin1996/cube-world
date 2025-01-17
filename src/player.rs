@@ -19,7 +19,7 @@ pub fn setup(
 ) {
     // 角色
     commands.spawn((
-        TnuaControllerBundle::default(),
+        TnuaController::default(),
         RigidBody::Dynamic,
         Collider::cuboid(0.2, 0.2, 0.2),
         Mesh3d(meshes.add(Cuboid::new(0.7, 0.7, 0.7))),
@@ -43,12 +43,11 @@ pub fn setup(
         look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(30.0, 18.0, 30.0),
     };
     commands.insert_resource(camera_at);
-    commands
-        .spawn((
-            LookTransform::new(Vec3::ZERO, Vec3::ZERO, Vec3::Y),
-            Smoother::new(0.9),
-        ))
-        .insert(Camera3dBundle::default());
+    commands.spawn((
+        LookTransform::new(Vec3::ZERO, Vec3::ZERO, Vec3::Y),
+        Smoother::new(0.9),
+        Camera3d::default(),
+    ));
 }
 
 pub fn handle_mouse_motion(

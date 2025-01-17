@@ -25,7 +25,7 @@ fn main() {
             PhysicsPlugins::default(),
             LookTransformPlugin,
             TnuaControllerPlugin::default(),
-            TnuaAvian3dPlugin::default(),
+            TnuaAvian3dPlugin::new(FixedUpdate),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
         ))

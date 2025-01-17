@@ -43,7 +43,7 @@ pub fn startup(
 
     // 随机草地
     let mut rng = rand::thread_rng();
-    let offsets: Vec<Transform> = (0..100000)
+    let offsets: Vec<Transform> = (0..10000)
         .map(|i| {
             let offset_x = rng.gen_range(-0.5..0.5);
             let offset_z = rng.gen_range(-0.5..0.5);
