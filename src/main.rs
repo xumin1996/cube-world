@@ -16,7 +16,7 @@ fn main() {
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "A Cool Title".into(),
-                    resolution: (512., 512.).into(),
+                    resolution: (1920., 1080.).into(),
                     resizable: true,
                     decorations: true,
                     ..default()

@@ -11,6 +11,6 @@ impl Material for CustomMaterial {
     //     "shaders/animate_shader.wgsl".into()
     // }
     fn fragment_shader() -> ShaderRef {
-        "shaders/electro_cube.wgsl".into()
+        "shaders/grid.wgsl".into()
     }
 }
