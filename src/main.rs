@@ -4,12 +4,8 @@ use bevy::prelude::*;
 use bevy_tnua::prelude::*;
 use bevy_tnua_avian3d::TnuaAvian3dPlugin;
 use smooth_bevy_cameras::LookTransformPlugin;
+use bevy_demo::{customMaterial, cubePlain, region};
 
-pub mod cubePlain;
-pub mod customMaterial;
-pub mod player;
-pub mod region;
-pub mod util;
 
 fn main() {
     App::new()

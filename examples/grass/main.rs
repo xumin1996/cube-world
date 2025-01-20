@@ -1,6 +1,4 @@
-use avian3d::parry::na::coordinates::X;
 use bevy::input::mouse::MouseMotion;
-use bevy::render::mesh::VertexAttributeValues;
 use bevy::{
     prelude::*,
     reflect::TypePath,
@@ -9,9 +7,7 @@ use bevy::{
 use bevy_obj::ObjPlugin;
 use core::f32;
 use rand::Rng;
-use util::Triangle;
-
-pub mod util;
+use bevy_demo::util::Triangle;
 
 fn main() {
     App::new()

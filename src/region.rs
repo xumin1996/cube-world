@@ -1,4 +1,4 @@
-use super::{player::Player, customMaterial::CustomMaterial};
+use crate::{player::Player, customMaterial::CustomMaterial};
 use super::cubePlain::CubePlain;
 use avian3d::prelude::*;
 use bevy::prelude::*;

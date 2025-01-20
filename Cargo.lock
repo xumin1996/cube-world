@@ -343,21 +343,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy-learn"
-version = "0.1.0"
-dependencies = [
- "avian3d",
- "bevy",
- "bevy-tnua",
- "bevy-tnua-avian3d",
- "bevy-tnua-physics-integration-layer",
- "bevy_obj",
- "rand",
- "simdnoise",
- "smooth-bevy-cameras",
-]
-
-[[package]]
 name = "bevy-tnua"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -574,6 +559,21 @@ dependencies = [
  "radsort",
  "serde",
  "smallvec",
+]
+
+[[package]]
+name = "bevy_demo"
+version = "0.1.0"
+dependencies = [
+ "avian3d",
+ "bevy",
+ "bevy-tnua",
+ "bevy-tnua-avian3d",
+ "bevy-tnua-physics-integration-layer",
+ "bevy_obj",
+ "rand",
+ "simdnoise",
+ "smooth-bevy-cameras",
 ]
 
 [[package]]
