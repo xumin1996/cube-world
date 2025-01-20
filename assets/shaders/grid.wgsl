@@ -7,7 +7,7 @@ const GRID_RATIO:f32 = 40.;
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let t = globals.time;
     var uv = in.uv - 0.5;
-    var col = vec3(0.0);
+    var col = vec3(0.129, 0.651, 0.208);
 
     uv *= 10.;
     let grid = grid(uv);

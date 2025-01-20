@@ -1,11 +1,10 @@
 use avian3d::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
-use bevy_tnua::prelude::*;
 use smooth_bevy_cameras::{LookTransform, Smoother};
 
 #[derive(Component)]
-pub struct Player;
+pub struct CubePlain;
 
 #[derive(Resource)]
 pub struct CameraLookAt {
@@ -19,23 +18,12 @@ pub fn setup(
 ) {
     // 角色
     commands.spawn((
-        TnuaController::default(),
         RigidBody::Dynamic,
-        Collider::cuboid(0.2, 0.2, 0.2),
+        Collider::cuboid(0.7, 0.7, 0.7),
         Mesh3d(meshes.add(Cuboid::new(0.7, 0.7, 0.7))),
         MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_xyz(5.0, 10.0, 5.0),
-        Player,
-    ));
-
-    // 点光源
-    commands.spawn((
-        PointLight {
-            shadows_enabled: true,
-            range: 100.0,
-            ..default()
-        },
-        Transform::from_xyz(4.0, 10.0, 4.0),
+        Transform::from_xyz(0.0, 100.0, 0.0),
+        CubePlain,
     ));
 
     // 平滑摄像机
@@ -71,12 +59,8 @@ pub fn handle_mouse_motion(
 pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
-    mut query: Query<&mut TnuaController>,
+    mut lv_query: Query<&mut LinearVelocity, With<CubePlain>>,
 ) {
-    let Ok(mut controller) = query.get_single_mut() else {
-        return;
-    };
-
     let look_direction = camera_look_at.look_at.normalize();
     let rotation_quaternion = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
     let look_direction_rotation = rotation_quaternion.mul_vec3(look_direction);
@@ -95,52 +79,23 @@ pub fn handle_keyboard_controls(
     if keyboard.pressed(KeyCode::KeyD) {
         direction += look_direction_rotation;
     }
-    controller.basis(TnuaBuiltinWalk {
-        desired_velocity: direction.normalize_or_zero() * 15.0,
-        float_height: 1.0,
-        ..Default::default()
-    });
-
-    if keyboard.pressed(KeyCode::Space) {
-        controller.action(TnuaBuiltinJump {
-            height: 2.0,
-            ..Default::default()
-        });
-    }
+    
+    let mut velocity: Mut<'_, LinearVelocity> = lv_query.single_mut();
+    velocity.x = direction.x * 40.0;
+    // velocity.y = look_direction.y;
+    velocity.z = direction.z * 40.0;
 }
 
 pub fn handle_camera(
     camera_look_at: Res<CameraLookAt>,
-    player_position_query: Query<&Transform, With<Player>>,
+    cube_plain_position_query: Query<&Transform, With<CubePlain>>,
     mut look_transform_query: Query<&mut LookTransform>,
 ) {
     // 更新摄像机位置
     let Ok(mut lt) = look_transform_query.get_single_mut() else {
         return;
     };
-    let player_position: &Transform = player_position_query.single();
-    lt.eye = player_position.translation - camera_look_at.look_at;
-    lt.target = player_position.translation;
-}
-
-pub fn handle_light(
-    mut gizmos: Gizmos,
-    player_position_query: Query<&Transform, With<Player>>,
-    mut point_light_transform: Query<&mut Transform, (With<PointLight>, Without<Player>)>,
-    point_light: Query<&PointLight>,
-) {
-    let player_position: &Transform = player_position_query.single();
-    // 更新光源
-    point_light_transform.single_mut().translation = Vec3::new(
-        player_position.translation.x,
-        player_position.translation.y + 5f32,
-        player_position.translation.z,
-    );
-
-    // gizmos.sphere(
-    //     point_light_transform.single_mut().translation,
-    //     Quat::from_rotation_x(0f32),
-    //     point_light.single().range,
-    //     Color::srgb(1.0, 0f32, 0f32),
-    // );
+    let cube_plain_position: &Transform = cube_plain_position_query.single();
+    lt.eye = cube_plain_position.translation - camera_look_at.look_at;
+    lt.target = cube_plain_position.translation;
 }

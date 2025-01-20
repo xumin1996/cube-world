@@ -1,4 +1,5 @@
 use super::{player::Player, customMaterial::CustomMaterial};
+use super::cubePlain::CubePlain;
 use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy::render::{
@@ -76,7 +77,7 @@ pub fn region_update(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut custom_materials: ResMut<Assets<CustomMaterial>>,
-    player_position_query: Query<&Transform, With<Player>>,
+    player_position_query: Query<&Transform, With<CubePlain>>,
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
 ) {
