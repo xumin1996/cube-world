@@ -570,7 +570,6 @@ dependencies = [
  "bevy-tnua",
  "bevy-tnua-avian3d",
  "bevy-tnua-physics-integration-layer",
- "bevy_obj",
  "rand",
  "simdnoise",
  "smooth-bevy-cameras",
@@ -911,18 +910,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da5ea3ad25d74ea36ea45418ad799f135d046db35c322b9704c4a8934eb65ce9"
 dependencies = [
  "glam",
-]
-
-[[package]]
-name = "bevy_obj"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b4ab78247d8e47e43295fe971d10842d4fcbed89c36d6388755e69a37c8723d"
-dependencies = [
- "bevy",
- "serde",
- "thiserror",
- "tobj",
 ]
 
 [[package]]
@@ -4220,15 +4207,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tobj"
-version = "4.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3bd4ba05f29e4c65b6c0c11a58b6465ffa820bac890d76ad407b4e81d8372e8"
-dependencies = [
- "ahash",
-]
 
 [[package]]
 name = "toml_datetime"

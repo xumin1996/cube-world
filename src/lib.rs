@@ -1,5 +1,3 @@
-
-pub struct Aaa {}
 pub mod cubePlain;
 pub mod customMaterial;
 pub mod player;

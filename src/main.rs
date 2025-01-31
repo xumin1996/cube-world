@@ -4,25 +4,16 @@ use bevy::prelude::*;
 use bevy_tnua::prelude::*;
 use bevy_tnua_avian3d::TnuaAvian3dPlugin;
 use smooth_bevy_cameras::LookTransformPlugin;
-use bevy_demo::{customMaterial, cubePlain, region};
+use bevy_demo::{customMaterial, cubePlain, region, player};
 
 
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "A Cool Title".into(),
-                    resolution: (1920., 1080.).into(),
-                    resizable: true,
-                    decorations: true,
-                    ..default()
-                }),
-                ..default()
-            }),
+            DefaultPlugins.build(),
             PhysicsPlugins::default(),
             LookTransformPlugin,
-            TnuaControllerPlugin::default(),
+            TnuaControllerPlugin::new(FixedUpdate),
             TnuaAvian3dPlugin::new(FixedUpdate),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
@@ -31,23 +22,24 @@ fn main() {
         .add_systems(
             Startup,
             (
-                // player::setup,
-                cubePlain::setup,
+                player::setup,
+                // cubePlain::setup,
                 region::startup,
             ),
         )
         .add_systems(
             Update,
             (
-                // player::handle_keyboard_controls,
-                // player::handle_mouse_motion,
-                // player::handle_camera,
-                // player::handle_light,
-                cubePlain::handle_keyboard_controls,
-                cubePlain::handle_mouse_motion,
-                cubePlain::handle_camera,
+                player::handle_keyboard_controls,
+                player::handle_mouse_motion,
+                player::handle_camera,
+                player::handle_light,
+                // cubePlain::handle_keyboard_controls,
+                // cubePlain::handle_mouse_motion,
+                // cubePlain::handle_camera,
                 region::region_update,
             ),
         )
+        .insert_resource(Gravity(Vec3::NEG_Y * 9.8))
         .run();
 }
