@@ -1,4 +1,4 @@
-use avian3d::prelude::*;
+use bevy_rapier3d::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use smooth_bevy_cameras::{LookTransform, Smoother};
@@ -59,7 +59,7 @@ pub fn handle_mouse_motion(
 pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
-    mut lv_query: Query<&mut LinearVelocity, With<CubePlain>>,
+    // mut lv_query: Query<&mut LinearVelocity, With<CubePlain>>,
 ) {
     let look_direction = camera_look_at.look_at.normalize();
     let rotation_quaternion = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
@@ -80,10 +80,10 @@ pub fn handle_keyboard_controls(
         direction += look_direction_rotation;
     }
     
-    let mut velocity: Mut<'_, LinearVelocity> = lv_query.single_mut();
-    velocity.x = direction.x * 40.0;
-    // velocity.y = look_direction.y;
-    velocity.z = direction.z * 40.0;
+    // let mut velocity: Mut<'_, LinearVelocity> = lv_query.single_mut();
+    // velocity.x = direction.x * 40.0;
+    // // velocity.y = look_direction.y;
+    // velocity.z = direction.z * 40.0;
 }
 
 pub fn handle_camera(

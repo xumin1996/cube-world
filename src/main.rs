@@ -1,20 +1,20 @@
-use avian3d::prelude::*;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_tnua::prelude::*;
-use bevy_tnua_avian3d::TnuaAvian3dPlugin;
 use smooth_bevy_cameras::LookTransformPlugin;
 use bevy_demo::{customMaterial, cubePlain, region, player};
+use bevy_rapier3d::prelude::*;
 
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.build(),
-            PhysicsPlugins::default(),
+            RapierPhysicsPlugin::<NoUserData>::default(),
+            // RapierDebugRenderPlugin::default(),
             LookTransformPlugin,
             TnuaControllerPlugin::new(FixedUpdate),
-            TnuaAvian3dPlugin::new(FixedUpdate),
+            // TnuaAvian3dPlugin::new(FixedUpdate),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
             MaterialPlugin::<customMaterial::CustomMaterial>::default(),
@@ -40,6 +40,5 @@ fn main() {
                 region::region_update,
             ),
         )
-        .insert_resource(Gravity(Vec3::NEG_Y * 9.8))
         .run();
 }

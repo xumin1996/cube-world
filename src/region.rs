@@ -2,13 +2,13 @@ use std::time::Instant;
 
 use crate::util::Triangle;
 use crate::{customMaterial::CustomMaterial, player::Player};
-use avian3d::prelude::*;
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::prelude::*;
 use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
 use bevy::time::Stopwatch;
+use bevy_rapier3d::prelude::*;
 use simdnoise::*;
 
 #[derive(Component, Debug)]
@@ -123,15 +123,23 @@ pub fn region_update(
                 let plain_mesh = get_mesh(region_x, region_z);
                 println!("get_mesh time: {}", (Instant::now() - start).as_secs_f32());
                 let start = Instant::now();
+                let plain_tri = Triangle::from_mesh(&plain_mesh);
+                let plain_indices = (0..plain_tri.points.len())
+                    .into_iter()
+                    .map(|n| n as u32)
+                    .collect::<Vec<u32>>()
+                    .chunks(3)
+                    .map(|vs| [vs[0], vs[1], vs[2]])
+                    .collect();
                 commands.spawn((
                     RigidRegion {
                         block_x: region_x,
                         block_y: 0,
                         block_z: region_z,
                     },
-                    RigidBody::Static,
+                    RigidBody::Fixed,
                     Mesh3d(meshes.add(plain_mesh)),
-                    ColliderConstructor::ConvexHullFromMesh,
+                    Collider::trimesh(plain_tri.points, plain_indices),
                 ));
                 println!("spawn time: {}", (Instant::now() - start).as_secs_f32());
             }

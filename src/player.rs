@@ -1,4 +1,4 @@
-use avian3d::prelude::*;
+use bevy_rapier3d::prelude::*;
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
@@ -98,7 +98,6 @@ pub fn handle_mouse_motion(
     // 鼠标
     let key_cool_timer = &mut key_cool_timer_query.single_mut().0;
     key_cool_timer.tick(time.delta());
-    println!("{:?} {}", time.delta(), key_cool_timer.finished());
     if mouse.pressed(MouseButton::Left) && key_cool_timer.finished() {
         if let Some(obj_mesh) = gltf_asset
             .get(&my_asset_packet.0)
@@ -115,12 +114,10 @@ pub fn handle_mouse_motion(
                 Mesh3d(meshes.add(Sphere::new(1.0))),
                 MeshMaterial3d(materials.add(Color::WHITE)),
                 RigidBody::Dynamic,
-                Collider::sphere(1.0),
+                Collider::ball(1.0),
                 // ColliderConstructor::ConvexHullFromMesh,
                 // GravityScale(1.0),
                 Transform::from_translation(player_position_query.single().translation.clone()),
-                ExternalForce::new(camera_look_at.look_at.normalize() * 10.0)
-                    .with_persistence(false),
             ));
         }
     }
