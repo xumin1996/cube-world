@@ -20,6 +20,10 @@ pub struct MyAssetPacket(Handle<Gltf>);
 #[derive(Component)]
 pub struct KeyCooldownTimer(Timer);
 
+const collider_player: Group = Group::GROUP_1;
+const collider_ground: Group = Group::GROUP_2;
+const collider_ball: Group = Group::GROUP_3;
+
 pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -44,6 +48,7 @@ pub fn setup(
         MeshMaterial3d(materials.add(Color::WHITE)),
         Transform::from_xyz(0.0, 10.0, 0.0),
         Player,
+        // CollisionGroups::new(collider_player, collider_ground),
     ));
 
     // 点光源
@@ -72,7 +77,7 @@ pub fn setup(
     commands.insert_resource(MyAssetPacket(pokeball_handle));
 
     // 按键冷却时间
-    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.3, TimerMode::Once)));
+    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.1, TimerMode::Once)));
 }
 
 pub fn handle_mouse_motion(
@@ -126,6 +131,7 @@ pub fn handle_mouse_motion(
                 // ColliderConstructor::ConvexHullFromMesh,
                 // GravityScale(1.0),
                 Transform::from_translation(player_position_query.single().translation.clone()),
+                // CollisionGroups::new(collider_ball, collider_ground),
             ));
         }
     }
@@ -158,7 +164,7 @@ pub fn handle_keyboard_controls(
     }
 
     // 角色位移
-    let mut direc = direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.1, 0.0);
+    let mut direc = direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {

@@ -9,6 +9,7 @@ use bevy::render::{
 };
 use bevy::time::Stopwatch;
 use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::rapier::prelude::RigidBodyActivation;
 use simdnoise::*;
 
 #[derive(Component, Debug)]
@@ -28,6 +29,10 @@ pub struct RigidRegion {
 #[derive(Resource)]
 pub struct MyAssetPacket(Handle<Gltf>);
 
+const collider_player: Group = Group::GROUP_1;
+const collider_ground: Group = Group::GROUP_2;
+const collider_ball: Group = Group::GROUP_3;
+
 pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 加载 .glb 文件
     let aio_handle = asset_server.load("models/aio.gltf");
@@ -36,15 +41,15 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn region_update(
     mut commands: Commands,
-    my_asset_packet: Res<MyAssetPacket>,
-    gltf_asset: Res<Assets<Gltf>>,
-    gltf_node_asset: Res<Assets<GltfNode>>,
-    gltf_mesh_asset: Res<Assets<GltfMesh>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     player_position_query: Query<&Transform, With<Player>>,
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
+    my_asset_packet: Res<MyAssetPacket>,
+    gltf_asset: Res<Assets<Gltf>>,
+    gltf_node_asset: Res<Assets<GltfNode>>,
+    gltf_mesh_asset: Res<Assets<GltfMesh>>,
 ) {
     let view_circle = 8;
     let rigid_circle = 3;
@@ -122,7 +127,7 @@ pub fn region_update(
                 let start = Instant::now();
                 let plain_mesh = get_mesh(region_x, region_z);
                 println!("get_mesh time: {}", (Instant::now() - start).as_secs_f32());
-                let start = Instant::now();
+
                 let plain_tri = Triangle::from_mesh(&plain_mesh);
                 let plain_indices = (0..plain_tri.points.len())
                     .into_iter()
@@ -131,6 +136,13 @@ pub fn region_update(
                     .chunks(3)
                     .map(|vs| [vs[0], vs[1], vs[2]])
                     .collect();
+                println!("plain_tri time: {}", (Instant::now() - start).as_secs_f32());
+
+                let start = Instant::now();
+                let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
+                println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
+                
+                let start = Instant::now();
                 commands.spawn((
                     RigidRegion {
                         block_x: region_x,
@@ -138,8 +150,8 @@ pub fn region_update(
                         block_z: region_z,
                     },
                     RigidBody::Fixed,
-                    Mesh3d(meshes.add(plain_mesh)),
-                    Collider::trimesh(plain_tri.points, plain_indices),
+                    trimesh,
+                    // CollisionGroups::new(collider_ground, collider_player | collider_ball ),
                 ));
                 println!("spawn time: {}", (Instant::now() - start).as_secs_f32());
             }
@@ -154,8 +166,7 @@ fn in_region(bx: i32, by: i32, bz: i32, px: i32, py: i32, pz: i32, region: i32) 
     return false;
 }
 
-fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
-    let start = Instant::now();
+fn get_map_height(region_x: i32, region_z: i32) -> Vec<Vec<f32>> {
     let plain_size = 16i32;
     // [x1,x1,x1,...,x2,x2,x2,...,x3,x3,x3,....xy, xy,xy,...]
     let (heights, min, max) = NoiseBuilder::fbm_2d_offset(
@@ -166,7 +177,6 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
     )
     .with_seed(1)
     .generate();
-    println!("random time: {}", (Instant::now() - start).as_secs_f32());
     let heights: Vec<f32> = heights.iter().map(|item| (item * 100f32).floor()).collect();
     let plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
@@ -175,6 +185,12 @@ fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
             rv
         })
         .collect();
+    return plain_height;
+}
+
+fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
+    let plain_size = 16i32;
+    let plain_height: Vec<Vec<f32>> = get_map_height(region_x, region_z);
 
     let start = Instant::now();
     let collider_cube_mesh = create_cube_mesh(

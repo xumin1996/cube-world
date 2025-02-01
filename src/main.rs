@@ -10,7 +10,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.build(),
             RapierPhysicsPlugin::<NoUserData>::default(),
-            // RapierDebugRenderPlugin::default(),
+            // RapierDebugRenderPlugin::default(),  // rapier碰撞调试
             LookTransformPlugin,
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
