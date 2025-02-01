@@ -35,8 +35,8 @@ const collider_ball: Group = Group::GROUP_3;
 
 pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 加载 .glb 文件
-    let aio_handle = asset_server.load("models/aio.gltf");
-    commands.insert_resource(MyAssetPacket(aio_handle));
+    let low_poly_stone_block_handle = asset_server.load("models/low_poly_stone_block.glb");
+    commands.insert_resource(MyAssetPacket(low_poly_stone_block_handle));
 }
 
 pub fn region_update(
