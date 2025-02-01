@@ -1,9 +1,8 @@
-use bevy_rapier3d::prelude::*;
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::state::commands;
-use bevy_tnua::prelude::*;
+use bevy_rapier3d::prelude::*;
 use smooth_bevy_cameras::{LookTransform, Smoother};
 
 #[derive(Component)]
@@ -29,12 +28,21 @@ pub fn setup(
 ) {
     // 角色
     commands.spawn((
-        TnuaController::default(),
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 1.0, 1.0),
+        KinematicCharacterController {
+            // up: Vec3::Y,
+            snap_to_ground: Some(CharacterLength::Absolute(1.0)),
+            autostep: Some(CharacterAutostep {
+                max_height: CharacterLength::Absolute(1.5),
+                min_width: CharacterLength::Absolute(0.5),
+                include_dynamic_bodies: true,
+            }),
+            ..default()
+        },
+        // RigidBody::KinematicPositionBased,
+        Collider::cuboid(0.5, 0.5, 0.5),
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_xyz(5.0, 10.0, 5.0),
+        Transform::from_xyz(0.0, 10.0, 0.0),
         Player,
     ));
 
@@ -126,13 +134,11 @@ pub fn handle_mouse_motion(
 pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
-    mut query: Query<&mut TnuaController>,
+    time: Res<Time>,
+    mut controller_query: Query<&mut KinematicCharacterController>,
 ) {
-    let Ok(mut controller) = query.get_single_mut() else {
-        return;
-    };
-
-    let look_direction = camera_look_at.look_at.normalize();
+    let mut look_direction = camera_look_at.look_at.normalize();
+    look_direction.y = 0.0;
     let rotation_quaternion = Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2);
     let look_direction_rotation = rotation_quaternion.mul_vec3(look_direction);
 
@@ -150,18 +156,18 @@ pub fn handle_keyboard_controls(
     if keyboard.pressed(KeyCode::KeyD) {
         direction += look_direction_rotation;
     }
-    controller.basis(TnuaBuiltinWalk {
-        desired_velocity: direction.normalize_or_zero() * 15.0,
-        float_height: 3.0,
-        ..Default::default()
-    });
 
+    // 角色位移
+    let mut direc = direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.1, 0.0);
+
+    // 跳跃
     if keyboard.pressed(KeyCode::Space) {
-        controller.action(TnuaBuiltinJump {
-            height: 3.0,
-            ..Default::default()
-        });
+        direc += Vec3::new(0.0, 1.0, 0.0)
     }
+
+    if let Ok(mut controller) = controller_query.get_single_mut() {
+        controller.translation = Some(direc);
+    };
 }
 
 pub fn handle_camera(

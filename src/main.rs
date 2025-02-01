@@ -1,6 +1,5 @@
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy_tnua::prelude::*;
 use smooth_bevy_cameras::LookTransformPlugin;
 use bevy_demo::{customMaterial, cubePlain, region, player};
 use bevy_rapier3d::prelude::*;
@@ -13,8 +12,6 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             // RapierDebugRenderPlugin::default(),
             LookTransformPlugin,
-            TnuaControllerPlugin::new(FixedUpdate),
-            // TnuaAvian3dPlugin::new(FixedUpdate),
             FrameTimeDiagnosticsPlugin,
             LogDiagnosticsPlugin::default(),
             MaterialPlugin::<customMaterial::CustomMaterial>::default(),

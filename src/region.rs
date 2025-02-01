@@ -47,7 +47,7 @@ pub fn region_update(
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
 ) {
     let view_circle = 8;
-    let rigid_circle = 2;
+    let rigid_circle = 3;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
