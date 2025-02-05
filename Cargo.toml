@@ -8,4 +8,4 @@ bevy = "0.15"
 simdnoise = "3.1.6"
 smooth-bevy-cameras = "0.13.0"
 rand = "0.8.5"
-bevy_rapier3d = { version = "0.28", features = ["parallel", "simd-stable"] }
+bevy_rapier3d = { version = "0.28", features = ["default"] }

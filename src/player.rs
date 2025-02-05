@@ -1,5 +1,6 @@
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::input::mouse::MouseMotion;
+use bevy::math::VectorSpace;
 use bevy::prelude::*;
 use bevy::state::commands;
 use bevy_rapier3d::prelude::*;
@@ -19,6 +20,12 @@ pub struct MyAssetPacket(Handle<Gltf>);
 // 定义按键冷却时间的组件
 #[derive(Component)]
 pub struct KeyCooldownTimer(Timer);
+
+#[derive(Component)]
+pub struct PrintTimer(Timer);
+
+#[derive(Component, Debug)]
+pub struct Bullet;
 
 const collider_player: Group = Group::GROUP_1;
 const collider_ground: Group = Group::GROUP_2;
@@ -78,6 +85,7 @@ pub fn setup(
 
     // 按键冷却时间
     commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.1, TimerMode::Once)));
+    commands.spawn(PrintTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 }
 
 pub fn handle_mouse_motion(
@@ -92,7 +100,9 @@ pub fn handle_mouse_motion(
     gltf_node_asset: Res<Assets<GltfNode>>,
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
     player_position_query: Query<&Transform, With<Player>>,
+    bullet_query: Query<&Transform, With<Bullet>>,
     mut key_cool_timer_query: Query<&mut KeyCooldownTimer>,
+    mut print_timer_query: Query<&mut PrintTimer>,
     time: Res<Time>,
 ) {
     let displacement = mouse_motion_events
@@ -122,6 +132,7 @@ pub fn handle_mouse_motion(
             key_cool_timer.reset();
 
             commands.spawn((
+                Bullet,
                 // Mesh3d(obj_mesh.primitives[0].mesh.clone()),
                 // MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
                 Mesh3d(meshes.add(Sphere::new(1.0))),
@@ -130,10 +141,22 @@ pub fn handle_mouse_motion(
                 Collider::ball(1.0),
                 // ColliderConstructor::ConvexHullFromMesh,
                 // GravityScale(1.0),
-                Transform::from_translation(player_position_query.single().translation.clone()),
+                Transform::from_translation(
+                    player_position_query.single().translation.clone() + Vec3::new(0.0, 5.0, 0.0),
+                ),
+                Velocity {
+                    linvel: camera_transform.translation,
+                    angvel: Vec3::ZERO,
+                },
                 // CollisionGroups::new(collider_ball, collider_ground),
             ));
         }
+    }
+
+    print_timer_query.single_mut().0.tick(time.delta());
+    if print_timer_query.single_mut().0.finished() {
+        println!("bullet number: {}", bullet_query.iter().len());
+        print_timer_query.single_mut().0.reset();
     }
 }
 
@@ -164,7 +187,8 @@ pub fn handle_keyboard_controls(
     }
 
     // 角色位移
-    let mut direc = direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
+    let mut direc =
+        direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {

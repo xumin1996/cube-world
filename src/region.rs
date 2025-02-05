@@ -141,7 +141,7 @@ pub fn region_update(
                 let start = Instant::now();
                 let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
                 println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
-                
+
                 let start = Instant::now();
                 commands.spawn((
                     RigidRegion {
