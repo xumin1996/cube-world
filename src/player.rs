@@ -58,16 +58,6 @@ pub fn setup(
         // CollisionGroups::new(collider_player, collider_ground),
     ));
 
-    // 点光源
-    commands.spawn((
-        PointLight {
-            shadows_enabled: true,
-            range: 100.0,
-            ..default()
-        },
-        Transform::from_xyz(4.0, 10.0, 4.0),
-    ));
-
     // 平滑摄像机
     let camera_at = CameraLookAt {
         look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(30.0, 18.0, 30.0),
@@ -84,7 +74,7 @@ pub fn setup(
     commands.insert_resource(MyAssetPacket(pokeball_handle));
 
     // 按键冷却时间
-    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.1, TimerMode::Once)));
+    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.01, TimerMode::Once)));
     commands.spawn(PrintTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 }
 
@@ -140,7 +130,7 @@ pub fn handle_mouse_motion(
                 RigidBody::Dynamic,
                 Collider::ball(1.0),
                 // ColliderConstructor::ConvexHullFromMesh,
-                // GravityScale(1.0),
+                GravityScale(1.0),
                 Transform::from_translation(
                     player_position_query.single().translation.clone() + Vec3::new(0.0, 5.0, 0.0),
                 ),
@@ -188,7 +178,7 @@ pub fn handle_keyboard_controls(
 
     // 角色位移
     let mut direc =
-        direction.normalize_or_zero() * 10.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
+        direction.normalize_or_zero() * 20.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {
@@ -212,26 +202,4 @@ pub fn handle_camera(
     let player_position: &Transform = player_position_query.single();
     lt.eye = player_position.translation - camera_look_at.look_at;
     lt.target = player_position.translation;
-}
-
-pub fn handle_light(
-    mut gizmos: Gizmos,
-    player_position_query: Query<&Transform, With<Player>>,
-    mut point_light_transform: Query<&mut Transform, (With<PointLight>, Without<Player>)>,
-    point_light: Query<&PointLight>,
-) {
-    let player_position: &Transform = player_position_query.single();
-    // 更新光源
-    point_light_transform.single_mut().translation = Vec3::new(
-        player_position.translation.x,
-        player_position.translation.y + 5f32,
-        player_position.translation.z,
-    );
-
-    // gizmos.sphere(
-    //     point_light_transform.single_mut().translation,
-    //     Quat::from_rotation_x(0f32),
-    //     point_light.single().range,
-    //     Color::srgb(1.0, 0f32, 0f32),
-    // );
 }

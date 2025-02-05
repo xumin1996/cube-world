@@ -27,7 +27,7 @@ pub struct RigidRegion {
 }
 
 #[derive(Resource)]
-pub struct MyAssetPacket(Handle<Gltf>);
+pub struct LowPolySanBlockAsset(Handle<Gltf>);
 
 const collider_player: Group = Group::GROUP_1;
 const collider_ground: Group = Group::GROUP_2;
@@ -35,8 +35,25 @@ const collider_ball: Group = Group::GROUP_3;
 
 pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 加载 .glb 文件
-    let low_poly_stone_block_handle = asset_server.load("models/low_poly_stone_block.glb");
-    commands.insert_resource(MyAssetPacket(low_poly_stone_block_handle));
+    let low_poly_sand_block_handle = asset_server.load("models/stylized_low-poly_sand_block.glb");
+    commands.insert_resource(LowPolySanBlockAsset(low_poly_sand_block_handle));
+
+    // 环境光
+    commands.insert_resource(AmbientLight {
+        color: Color::srgb(0.2, 0.2, 0.2),
+        ..default()
+    });
+
+    // 平行光
+    commands.spawn((
+        DirectionalLight {
+            shadows_enabled: true,
+            color: Color::WHITE,
+            illuminance: 10000.0,
+            ..default()
+        },
+        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 6.0)),
+    ));
 }
 
 pub fn region_update(
@@ -46,13 +63,13 @@ pub fn region_update(
     player_position_query: Query<&Transform, With<Player>>,
     view_region_entity: Query<(Entity, &ViewRegion), With<ViewRegion>>,
     rigid_region_entity: Query<(Entity, &RigidRegion), With<RigidRegion>>,
-    my_asset_packet: Res<MyAssetPacket>,
+    sand_block_query: Res<LowPolySanBlockAsset>,
     gltf_asset: Res<Assets<Gltf>>,
     gltf_node_asset: Res<Assets<GltfNode>>,
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
 ) {
     let view_circle = 8;
-    let rigid_circle = 3;
+    let rigid_circle = 4;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -91,26 +108,33 @@ pub fn region_update(
     }
 
     // view地形 默认加载周围(view_circle * view_circle)的区块
-    let cube_material = materials.add(Color::WHITE);
-    for region_x in player_region_x - view_circle..=player_region_x + view_circle {
-        for region_z in player_region_z - view_circle..=player_region_z + view_circle {
-            // 检查是否已经存在
-            let fit_num = view_region_list
-                .iter()
-                .filter(|v| v.block_x == region_x && v.block_z == region_z)
-                .count();
+    if let Some(obj_mesh) = gltf_asset
+        .get(&sand_block_query.0)
+        .and_then(|gltf| gltf_node_asset.get(&gltf.named_nodes["defaultMaterial"]))
+        .and_then(|floor_dirt| floor_dirt.mesh.as_ref())
+        .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
+    {
+        let cube_material = materials.add(Color::WHITE);
+        for region_x in player_region_x - view_circle..=player_region_x + view_circle {
+            for region_z in player_region_z - view_circle..=player_region_z + view_circle {
+                // 检查是否已经存在
+                let fit_num = view_region_list
+                    .iter()
+                    .filter(|v| v.block_x == region_x && v.block_z == region_z)
+                    .count();
 
-            if fit_num == 0 {
-                let plain_height = get_mesh(region_x, region_z);
-                commands.spawn((
-                    ViewRegion {
-                        block_x: region_x,
-                        block_y: 0,
-                        block_z: region_z,
-                    },
-                    Mesh3d(meshes.add(plain_height)),
-                    MeshMaterial3d(cube_material.clone()),
-                ));
+                if fit_num == 0 {
+                    let plain_height = get_mesh(region_x, region_z);
+                    commands.spawn((
+                        ViewRegion {
+                            block_x: region_x,
+                            block_y: 0,
+                            block_z: region_z,
+                        },
+                        Mesh3d(meshes.add(plain_height)),
+                        MeshMaterial3d(cube_material.clone()),
+                    ));
+                }
             }
         }
     }
