@@ -4,6 +4,7 @@ use crate::util::Triangle;
 use crate::{customMaterial::CustomMaterial, player::Player};
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::prelude::*;
+use bevy::render::mesh;
 use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
@@ -67,9 +68,10 @@ pub fn region_update(
     gltf_asset: Res<Assets<Gltf>>,
     gltf_node_asset: Res<Assets<GltfNode>>,
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
+    asset_server: Res<AssetServer>,
 ) {
-    let view_circle = 8;
-    let rigid_circle = 4;
+    let view_circle = 10;
+    let rigid_circle = 5;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -110,11 +112,24 @@ pub fn region_update(
     // view地形 默认加载周围(view_circle * view_circle)的区块
     if let Some(obj_mesh) = gltf_asset
         .get(&sand_block_query.0)
-        .and_then(|gltf| gltf_node_asset.get(&gltf.named_nodes["defaultMaterial"]))
+        .and_then(|gltf| gltf_node_asset.get(&gltf.named_nodes["block"]))
         .and_then(|floor_dirt| floor_dirt.mesh.as_ref())
         .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
     {
-        let cube_material = materials.add(Color::WHITE);
+        // 加载 PBR 贴图
+        let base_color_texture = asset_server.load("textures/cobblestone.png");
+        let normal_texture = asset_server.load("textures/cobblestone_n.png");
+        let metallic_roughness_texture = asset_server.load("textures/cobblestone_s.png");
+
+        // 创建 PBR 材质
+        let material = materials.add(StandardMaterial {
+            base_color_texture: Some(base_color_texture),
+            normal_map_texture: Some(normal_texture),
+            metallic_roughness_texture: Some(metallic_roughness_texture),
+            ..default()
+        });
+
+        // let cube_material = materials.add(Color::WHITE);
         for region_x in player_region_x - view_circle..=player_region_x + view_circle {
             for region_z in player_region_z - view_circle..=player_region_z + view_circle {
                 // 检查是否已经存在
@@ -124,15 +139,30 @@ pub fn region_update(
                     .count();
 
                 if fit_num == 0 {
-                    let plain_height = get_mesh(region_x, region_z);
+                    let region_mesh: Mesh = region_by_block(region_x, region_z);
+
+                    // 区块偏移
+                    let plain_size = 16i32;
+                    let region_transform = Transform::from_xyz(
+                        region_x as f32 * plain_size as f32,
+                        0f32,
+                        region_z as f32 * plain_size as f32,
+                    );
+
+                    // let block_mesh: &Mesh = meshes.get(&obj_mesh.primitives[0].mesh).unwrap();
+                    // let region_mesh: Mesh = region_by_mesh(region_x, region_z, block_mesh);
                     commands.spawn((
                         ViewRegion {
                             block_x: region_x,
                             block_y: 0,
                             block_z: region_z,
                         },
-                        Mesh3d(meshes.add(plain_height)),
-                        MeshMaterial3d(cube_material.clone()),
+                        // Mesh3d(meshes.add(region_mesh)),
+                        // MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
+                        Mesh3d(meshes.add(region_mesh)),
+                        // MeshMaterial3d(cube_material.clone()),
+                        MeshMaterial3d(material.clone()),
+                        region_transform,
                     ));
                 }
             }
@@ -149,7 +179,7 @@ pub fn region_update(
                 .count();
             if fit_num == 0 {
                 let start = Instant::now();
-                let plain_mesh = get_mesh(region_x, region_z);
+                let plain_mesh = region_by_block(region_x, region_z);
                 println!("get_mesh time: {}", (Instant::now() - start).as_secs_f32());
 
                 let plain_tri = Triangle::from_mesh(&plain_mesh);
@@ -166,6 +196,14 @@ pub fn region_update(
                 let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
                 println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
 
+                // 区块偏移
+                let plain_size = 16i32;
+                let region_transform = Transform::from_xyz(
+                    region_x as f32 * plain_size as f32,
+                    0f32,
+                    region_z as f32 * plain_size as f32,
+                );
+
                 let start = Instant::now();
                 commands.spawn((
                     RigidRegion {
@@ -176,6 +214,7 @@ pub fn region_update(
                     RigidBody::Fixed,
                     trimesh,
                     // CollisionGroups::new(collider_ground, collider_player | collider_ball ),
+                    region_transform,
                 ));
                 println!("spawn time: {}", (Instant::now() - start).as_secs_f32());
             }
@@ -212,24 +251,42 @@ fn get_map_height(region_x: i32, region_z: i32) -> Vec<Vec<f32>> {
     return plain_height;
 }
 
-fn get_mesh(region_x: i32, region_z: i32) -> Mesh {
-    let plain_size = 16i32;
+fn region_by_block(region_x: i32, region_z: i32) -> Mesh {
     let plain_height: Vec<Vec<f32>> = get_map_height(region_x, region_z);
 
     let start = Instant::now();
-    let collider_cube_mesh = create_cube_mesh(
-        &plain_height,
-        Transform::from_xyz(
-            region_x as f32 * plain_size as f32,
-            0f32,
-            region_z as f32 * plain_size as f32,
-        ),
-    );
+    let collider_cube_mesh = create_cube_mesh(&plain_height);
     println!(
         "create mesh time: {}",
         (Instant::now() - start).as_secs_f32()
     );
     collider_cube_mesh
+}
+
+fn region_by_mesh(region_x: i32, region_z: i32, mesh_obj: &Mesh) -> Mesh {
+    let plain_size = 16usize;
+    let plain_height: Vec<Vec<f32>> = get_map_height(region_x, region_z);
+
+    let start = Instant::now();
+    let mut block_tris = Vec::<Transform>::new();
+    for (x_index, z_list) in plain_height.iter().take(plain_size).enumerate() {
+        for (z_index, y_height) in z_list.iter().take(plain_size).enumerate() {
+            // 顶点
+            let cube_size = 1f32;
+            let x = cube_size * x_index as f32;
+            let y = *y_height;
+            let z = cube_size * z_index as f32;
+            let block_transform = Transform::from_xyz(x, y, z).with_scale(Vec3::new(1.3, 1.3, 1.3));
+            block_tris.push(block_transform);
+        }
+    }
+    let block_tri: Triangle = Triangle::from_mesh(mesh_obj);
+    let block_tri = block_tri * block_tris;
+    println!(
+        "region_by_mesh mesh time: {}",
+        (Instant::now() - start).as_secs_f32()
+    );
+    block_tri.build()
 }
 
 // 创建平面网格 (16+1)*(16+1) x,y
@@ -280,7 +337,7 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
     .with_inserted_indices(Indices::U32(indices))
 }
 
-fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
+fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>) -> Mesh {
     let plain_size = 16usize;
     let mut cube_transform = Vec::<Transform>::new();
 
@@ -288,9 +345,9 @@ fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh {
         for (z_index, y_height) in z_list.iter().take(plain_size).enumerate() {
             // 顶点
             let cube_size = 1f32;
-            let x = cube_size * x_index as f32 + transform.translation.x;
+            let x = cube_size * x_index as f32;
             let y = *y_height;
-            let z = cube_size * z_index as f32 + transform.translation.z;
+            let z = cube_size * z_index as f32;
             cube_transform.push(Transform::from_xyz(x, y, z));
         }
     }
@@ -348,35 +405,35 @@ fn create_cubes(cube_positions: &Vec<Transform>) -> Mesh {
         attribute_position.extend(item_position);
         attribute_uv_0.extend(vec![
             // Assigning the UV coords for the top side.
-            [0.0, 0.2],
+            [0.0, 1.0],
             [0.0, 0.0],
             [1.0, 0.0],
-            [1.0, 0.2],
+            [1.0, 1.0],
             // Assigning the UV coords for the bottom side.
-            [0.0, 0.45],
-            [0.0, 0.25],
-            [1.0, 0.25],
-            [1.0, 0.45],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
             // Assigning the UV coords for the right side.
-            [1.0, 0.45],
-            [0.0, 0.45],
-            [0.0, 0.2],
-            [1.0, 0.2],
+            [1.0, 1.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [1.0, 0.0],
             // Assigning the UV coords for the left side.
-            [1.0, 0.45],
-            [0.0, 0.45],
-            [0.0, 0.2],
-            [1.0, 0.2],
+            [1.0, 1.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [1.0, 0.0],
             // Assigning the UV coords for the back side.
-            [0.0, 0.45],
-            [0.0, 0.2],
-            [1.0, 0.2],
-            [1.0, 0.45],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
             // Assigning the UV coords for the forward side.
-            [0.0, 0.45],
-            [0.0, 0.2],
-            [1.0, 0.2],
-            [1.0, 0.45],
+            [0.0, 1.0],
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
         ]);
         attribute_normal.extend(vec![
             // Normals for the top side (towards +y)

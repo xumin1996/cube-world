@@ -74,7 +74,7 @@ pub fn setup(
     commands.insert_resource(MyAssetPacket(pokeball_handle));
 
     // 按键冷却时间
-    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.01, TimerMode::Once)));
+    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.1, TimerMode::Once)));
     commands.spawn(PrintTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 }
 
@@ -123,10 +123,10 @@ pub fn handle_mouse_motion(
 
             commands.spawn((
                 Bullet,
-                // Mesh3d(obj_mesh.primitives[0].mesh.clone()),
-                // MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
-                Mesh3d(meshes.add(Sphere::new(1.0))),
-                MeshMaterial3d(materials.add(Color::WHITE)),
+                Mesh3d(obj_mesh.primitives[0].mesh.clone()),
+                MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
+                // Mesh3d(meshes.add(Sphere::new(1.0))),
+                // MeshMaterial3d(materials.add(Color::WHITE)),
                 RigidBody::Dynamic,
                 Collider::ball(1.0),
                 // ColliderConstructor::ConvexHullFromMesh,
