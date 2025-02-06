@@ -47,7 +47,7 @@ pub fn startup(
 
     // 环境光
     commands.insert_resource(AmbientLight {
-        brightness: 100.0,
+        brightness: 1000.0,
         color: Color::srgb(1.0, 1.0, 1.0),
         ..default()
     });

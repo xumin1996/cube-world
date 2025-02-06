@@ -41,6 +41,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // 环境光
     commands.insert_resource(AmbientLight {
+        brightness: 1000.0,
         color: Color::srgb(0.2, 0.2, 0.2),
         ..default()
     });
@@ -53,7 +54,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             illuminance: 10000.0,
             ..default()
         },
-        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 6.0)),
+        Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 3.0)),
     ));
 }
 
@@ -256,11 +257,11 @@ fn region_by_block(region_x: i32, region_z: i32) -> Mesh {
 
     let start = Instant::now();
     let mut collider_cube_mesh = create_cube_mesh(&plain_height);
+    collider_cube_mesh.generate_tangents().expect("generate_tangents fail");
     println!(
         "create mesh time: {}",
         (Instant::now() - start).as_secs_f32()
     );
-    collider_cube_mesh.generate_tangents().expect("generate_tangents fail");
     collider_cube_mesh
 }
 
