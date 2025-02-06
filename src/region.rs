@@ -49,7 +49,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
-            color: Color::WHITE,
+            color: Color::srgb(1.0, 1.0, 0.863),
             illuminance: 10000.0,
             ..default()
         },
@@ -117,9 +117,9 @@ pub fn region_update(
         .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
     {
         // 加载 PBR 贴图
-        let base_color_texture = asset_server.load("textures/cobblestone.png");
-        let normal_texture = asset_server.load("textures/cobblestone_n.png");
-        let metallic_roughness_texture = asset_server.load("textures/cobblestone_s.png");
+        let base_color_texture: Handle<Image> = asset_server.load("textures/cobblestone.png");
+        let normal_texture: Handle<Image> = asset_server.load("textures/cobblestone_n.png");
+        let metallic_roughness_texture: Handle<Image> = asset_server.load("textures/cobblestone_s.png");
 
         // 创建 PBR 材质
         let material = materials.add(StandardMaterial {
@@ -255,11 +255,12 @@ fn region_by_block(region_x: i32, region_z: i32) -> Mesh {
     let plain_height: Vec<Vec<f32>> = get_map_height(region_x, region_z);
 
     let start = Instant::now();
-    let collider_cube_mesh = create_cube_mesh(&plain_height);
+    let mut collider_cube_mesh = create_cube_mesh(&plain_height);
     println!(
         "create mesh time: {}",
         (Instant::now() - start).as_secs_f32()
     );
+    collider_cube_mesh.generate_tangents().expect("generate_tangents fail");
     collider_cube_mesh
 }
 

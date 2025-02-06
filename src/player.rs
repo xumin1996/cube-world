@@ -60,7 +60,7 @@ pub fn setup(
 
     // 平滑摄像机
     let camera_at = CameraLookAt {
-        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(30.0, 18.0, 30.0),
+        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(10.0, 6.0, 10.0),
     };
     commands.insert_resource(camera_at);
     commands.spawn((
