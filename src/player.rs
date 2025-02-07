@@ -41,6 +41,7 @@ pub fn setup(
     commands.spawn((
         KinematicCharacterController {
             // up: Vec3::Y,
+            offset: CharacterLength::Absolute(0.01),
             snap_to_ground: Some(CharacterLength::Absolute(1.0)),
             autostep: Some(CharacterAutostep {
                 max_height: CharacterLength::Absolute(1.5),

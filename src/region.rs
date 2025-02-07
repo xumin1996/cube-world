@@ -8,6 +8,7 @@ use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
 use bevy_rapier3d::prelude::*;
+use rand::Rng;
 use simdnoise::*;
 
 #[derive(Component, Debug)]
@@ -115,13 +116,14 @@ pub fn region_update(
         .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
     {
         // 加载 PBR 贴图
-        let base_color_texture: Handle<Image> = asset_server.load("textures/barrel_side.png");
-        let normal_texture: Handle<Image> = asset_server.load("textures/barrel_side_n.png");
+        let base_color_texture: Handle<Image> = asset_server.load("textures/grass_block_top.png");
+        let normal_texture: Handle<Image> = asset_server.load("textures/grass_block_top_n.png");
         let metallic_roughness_texture: Handle<Image> =
-            asset_server.load("textures/barrel_side_mr.png");
+            asset_server.load("textures/grass_block_top_mr.png");
 
         // 创建 PBR 材质
         let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.5647, 0.8039, 0.5922),
             base_color_texture: Some(base_color_texture),
             normal_map_texture: Some(normal_texture),
             metallic: 1.0,
@@ -356,10 +358,13 @@ fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>) -> Mesh {
         }
     }
 
+    let mut rng = rand::thread_rng();
+    let x_off = rng.gen_range(0..2) as f32 * (1.0 / 2.0);
+    let y_off = rng.gen_range(0..2) as f32 * (1.0 / 2.0);
     let mut cube_mesh: Triangle = Triangle::from_mesh(&Cuboid::new(1.0, 1.0, 1.0).mesh().build());
     cube_mesh.uv.iter_mut().for_each(|item|{
-        item.x = item.x / 1.0;
-        item.y = item.y / 1.0; 
+        item.x = item.x / 2.0 + x_off;
+        item.y = item.y / 2.0 + y_off; 
     });
     let plain_mesh: Triangle = cube_mesh * cube_transform;
 
