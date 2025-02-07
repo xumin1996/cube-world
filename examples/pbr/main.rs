@@ -30,12 +30,14 @@ pub fn startup(
     let base_color_texture: Handle<Image> = asset_server.load("textures/cobblestone.png");
     let normal_texture: Handle<Image> = asset_server.load("textures/cobblestone_n.png");
     let metallic_roughness_texture: Handle<Image> =
-        asset_server.load("textures/cobblestone_s.png");
+        asset_server.load("textures/cobblestone_mr.png");
 
     // 创建 PBR 材质
     let material: Handle<StandardMaterial> = materials.add(StandardMaterial {
         base_color_texture: Some(base_color_texture),
         normal_map_texture: Some(normal_texture),
+        metallic: 1.0,
+        perceptual_roughness: 1.0,
         metallic_roughness_texture: Some(metallic_roughness_texture),
         ..default()
     });
