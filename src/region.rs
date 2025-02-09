@@ -39,7 +39,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // 环境光
     commands.insert_resource(AmbientLight {
-        brightness: 1000.0,
+        brightness: 2000.0,
         color: Color::srgb(0.2, 0.2, 0.2),
         ..default()
     });
@@ -49,7 +49,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         DirectionalLight {
             shadows_enabled: true,
             color: Color::srgb(1.0, 1.0, 0.863),
-            illuminance: 10000.0,
+            illuminance: 5000.0,
             ..default()
         },
         Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 3.0)),
@@ -69,8 +69,8 @@ pub fn region_update(
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
     asset_server: Res<AssetServer>,
 ) {
-    let view_circle = 10;
-    let rigid_circle = 5;
+    let view_circle = 5;
+    let rigid_circle = 4;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -123,8 +123,8 @@ pub fn region_update(
 
         // 创建 PBR 材质
         let material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.5647, 0.8039, 0.5922),
-            base_color_texture: Some(base_color_texture),
+            base_color: Color::srgb(0.129, 0.651, 0.208),
+            // base_color_texture: Some(base_color_texture),
             normal_map_texture: Some(normal_texture),
             metallic: 1.0,
             perceptual_roughness: 1.0,

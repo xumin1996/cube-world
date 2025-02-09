@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::input::mouse::MouseMotion;
 use bevy::math::VectorSpace;
@@ -41,27 +43,32 @@ pub fn setup(
     commands.spawn((
         KinematicCharacterController {
             // up: Vec3::Y,
+            apply_impulse_to_dynamic_bodies: true,
             offset: CharacterLength::Absolute(0.01),
             snap_to_ground: Some(CharacterLength::Absolute(1.0)),
             autostep: Some(CharacterAutostep {
                 max_height: CharacterLength::Absolute(1.5),
-                min_width: CharacterLength::Absolute(0.5),
+                min_width: CharacterLength::Absolute(0.6),
                 include_dynamic_bodies: true,
             }),
             ..default()
         },
-        // RigidBody::KinematicPositionBased,
+        LockedAxes::ROTATION_LOCKED,
+        RigidBody::Dynamic,
         Collider::cuboid(0.5, 0.5, 0.5),
+        GravityScale(3.0),
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
+        // SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/Fox.glb"))),
         Transform::from_xyz(0.0, 10.0, 0.0),
         Player,
+        Velocity::zero(),
         // CollisionGroups::new(collider_player, collider_ground),
     ));
 
     // 平滑摄像机
     let camera_at = CameraLookAt {
-        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(10.0, 6.0, 10.0),
+        look_at: Vec3::new(0.0, 0.0, 0.0) - Vec3::new(20.0, 12.0, 0.0),
     };
     commands.insert_resource(camera_at);
     commands.spawn((
@@ -90,8 +97,8 @@ pub fn handle_mouse_motion(
     gltf_asset: Res<Assets<Gltf>>,
     gltf_node_asset: Res<Assets<GltfNode>>,
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
-    player_position_query: Query<&Transform, With<Player>>,
-    bullet_query: Query<&Transform, With<Bullet>>,
+    mut player_position_query: Query<&mut Transform, With<Player>>,
+    // bullet_query: Query<&Transform, With<Bullet>>,
     mut key_cool_timer_query: Query<&mut KeyCooldownTimer>,
     mut print_timer_query: Query<&mut PrintTimer>,
     time: Res<Time>,
@@ -108,6 +115,10 @@ pub fn handle_mouse_motion(
         camera_transform.translation.y,
         camera_transform.translation.z,
     );
+
+    player_position_query
+        .single_mut()
+        .rotate_local_y(-displacement / 500.);
 
     // 鼠标
     let key_cool_timer = &mut key_cool_timer_query.single_mut().0;
@@ -133,8 +144,9 @@ pub fn handle_mouse_motion(
                 // ColliderConstructor::ConvexHullFromMesh,
                 GravityScale(1.0),
                 Transform::from_translation(
-                    player_position_query.single().translation.clone() + Vec3::new(0.0, 5.0, 0.0),
-                ),
+                    player_position_query.single().translation.clone() + Vec3::new(0.0, 2.0, 0.0),
+                )
+                .with_scale(Vec3::new(0.2, 0.2, 0.2)),
                 Velocity {
                     linvel: camera_transform.translation,
                     angvel: Vec3::ZERO,
@@ -146,7 +158,7 @@ pub fn handle_mouse_motion(
 
     print_timer_query.single_mut().0.tick(time.delta());
     if print_timer_query.single_mut().0.finished() {
-        println!("bullet number: {}", bullet_query.iter().len());
+        // println!("bullet number: {}", bullet_query.iter().len());
         print_timer_query.single_mut().0.reset();
     }
 }
@@ -156,6 +168,7 @@ pub fn handle_keyboard_controls(
     camera_look_at: Res<CameraLookAt>,
     time: Res<Time>,
     mut controller_query: Query<&mut KinematicCharacterController>,
+    mut player_velocity: Query<&mut Velocity, With<Player>>,
 ) {
     let mut look_direction = camera_look_at.look_at.normalize();
     look_direction.y = 0.0;
@@ -178,12 +191,11 @@ pub fn handle_keyboard_controls(
     }
 
     // 角色位移
-    let mut direc =
-        direction.normalize_or_zero() * 20.0 * time.delta_secs() + Vec3::new(0.0, -0.5, 0.0);
+    let mut direc = direction.normalize_or_zero() * 20.0 * time.delta_secs();
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {
-        direc += Vec3::new(0.0, 1.0, 0.0)
+        player_velocity.single_mut().linvel.y = 5.0;
     }
 
     if let Ok(mut controller) = controller_query.get_single_mut() {
