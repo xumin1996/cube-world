@@ -31,6 +31,7 @@ fn main() {
                 player::handle_keyboard_controls,
                 player::handle_mouse_motion,
                 player::handle_camera,
+                player::del_bullet,
                 // cubePlain::handle_keyboard_controls,
                 // cubePlain::handle_mouse_motion,
                 // cubePlain::handle_camera,
