@@ -1,12 +1,17 @@
+use std::ops::Add;
 use std::time::Instant;
 
 use crate::player::Player;
 use crate::util::Triangle;
 use bevy::gltf::{Gltf, GltfMesh, GltfNode};
+use bevy::math::VectorSpace;
+use bevy::pbr::{CascadeShadowConfig, CascadeShadowConfigBuilder};
 use bevy::prelude::*;
+use bevy::render::render_resource::{Extent3d, Texture, TextureDimension, TextureFormat};
 use bevy::render::{
     mesh::Indices, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology,
 };
+use bevy::scene::ron::de;
 use bevy_rapier3d::prelude::*;
 use rand::Rng;
 use simdnoise::*;
@@ -46,6 +51,12 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // 平行光
     commands.spawn((
+        CascadeShadowConfigBuilder {
+            num_cascades: 4,
+            maximum_distance: 1000.0,
+            ..default()
+        }
+        .build(),
         DirectionalLight {
             shadows_enabled: true,
             color: Color::srgb(1.0, 1.0, 0.863),
@@ -58,6 +69,7 @@ pub fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn region_update(
     mut commands: Commands,
+    mut color_textures: ResMut<Assets<Image>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     player_position_query: Query<&Transform, With<Player>>,
@@ -69,8 +81,8 @@ pub fn region_update(
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
     asset_server: Res<AssetServer>,
 ) {
-    let view_circle = 5;
-    let rigid_circle = 4;
+    let view_circle = 4;
+    let rigid_circle = 3;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -121,20 +133,23 @@ pub fn region_update(
         let metallic_roughness_texture: Handle<Image> =
             asset_server.load("textures/grass_block_top_mr.png");
 
-        // 创建 PBR 材质
-        let material = materials.add(StandardMaterial {
-            base_color: Color::srgb(0.129, 0.651, 0.208),
-            // base_color_texture: Some(base_color_texture),
-            normal_map_texture: Some(normal_texture),
-            metallic: 1.0,
-            perceptual_roughness: 1.0,
-            metallic_roughness_texture: Some(metallic_roughness_texture),
-            ..default()
-        });
-
         // let cube_material = materials.add(Color::WHITE);
         for region_x in player_region_x - view_circle..=player_region_x + view_circle {
             for region_z in player_region_z - view_circle..=player_region_z + view_circle {
+                // 创建texture
+                // let color_texture = color_textures.add(create_texture(region_x, region_z));
+
+                // 创建 PBR 材质
+                let material = materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.749020, 0.643137, 0.450980),
+                    base_color_texture: Some(base_color_texture.clone()),
+                    normal_map_texture: Some(normal_texture.clone()),
+                    metallic: 1.0,
+                    perceptual_roughness: 1.0,
+                    metallic_roughness_texture: Some(metallic_roughness_texture.clone()),
+                    ..default()
+                });
+
                 // 检查是否已经存在
                 let fit_num = view_region_list
                     .iter()
@@ -346,6 +361,7 @@ fn create_plain_mesh(height_mesh: &Vec<Vec<f32>>, transform: Transform) -> Mesh 
 fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>) -> Mesh {
     let plain_size = 16usize;
     let mut cube_transform: Vec<Transform> = Vec::<Transform>::new();
+    let mut cube_triangles: Vec<Triangle> = Vec::<Triangle>::new();
 
     for (x_index, z_list) in height_mesh.iter().take(plain_size).enumerate() {
         for (z_index, y_height) in z_list.iter().take(plain_size).enumerate() {
@@ -354,19 +370,43 @@ fn create_cube_mesh(height_mesh: &Vec<Vec<f32>>) -> Mesh {
             let x = cube_size * x_index as f32;
             let y = *y_height;
             let z = cube_size * z_index as f32;
-            cube_transform.push(Transform::from_xyz(x, y, z));
+
+            let mut cube_mesh: Triangle = Triangle::from_mesh(&Cuboid::new(1.0, 1.0, 1.0).mesh().build());
+            cube_mesh.uv.iter_mut().for_each(|item: &mut Vec3| {
+                item.x = item.x / plain_size as f32 + x_index as f32 / plain_size as f32;
+                item.y = item.y / plain_size as f32 + z_index as f32 / plain_size as f32;
+            });
+            cube_triangles.push(cube_mesh * Transform::from_xyz(x, y, z));
         }
     }
 
-    let mut rng = rand::thread_rng();
-    let x_off = rng.gen_range(0..2) as f32 * (1.0 / 2.0);
-    let y_off = rng.gen_range(0..2) as f32 * (1.0 / 2.0);
-    let mut cube_mesh: Triangle = Triangle::from_mesh(&Cuboid::new(1.0, 1.0, 1.0).mesh().build());
-    cube_mesh.uv.iter_mut().for_each(|item|{
-        item.x = item.x / 2.0 + x_off;
-        item.y = item.y / 2.0 + y_off; 
-    });
-    let plain_mesh: Triangle = cube_mesh * cube_transform;
+    let mut r: Triangle = Triangle::new(Vec::new(), Vec::new(), Vec::new());
+    for tri in cube_triangles {
+        r = r + tri;
+    }
+    
+    r.build()
+}
 
-    plain_mesh.build()
+fn create_texture(region_x: i32, region_z: i32) -> Image {
+    let size = 128;
+    let (heights, min, max) =
+        NoiseBuilder::fbm_2d_offset((region_x * size) as f32, 128, (region_z * size) as f32, 128)
+            .with_seed(1)
+            .generate();
+        let noise_texture = heights.iter()
+            .map(|x| (x * 255.0) as u8)
+            .collect::<Vec<u8>>();
+
+    Image::new_fill(
+        Extent3d {
+            width: 128,
+            height: 128,
+            ..default()
+        },
+        TextureDimension::D2,
+        &noise_texture,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+    )
 }

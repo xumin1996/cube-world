@@ -4,6 +4,7 @@ use bevy::gltf::{Gltf, GltfMesh, GltfNode};
 use bevy::input::mouse::MouseMotion;
 use bevy::math::VectorSpace;
 use bevy::prelude::*;
+use bevy::render::render_resource::Texture;
 use bevy::state::commands;
 use bevy_rapier3d::prelude::*;
 use smooth_bevy_cameras::{LookTransform, Smoother};
@@ -56,7 +57,7 @@ pub fn setup(
         LockedAxes::ROTATION_LOCKED,
         RigidBody::Dynamic,
         Collider::cuboid(0.5, 0.5, 0.5),
-        GravityScale(3.0),
+        GravityScale(4.0),
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
         // SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/Fox.glb"))),
@@ -195,7 +196,7 @@ pub fn handle_keyboard_controls(
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {
-        player_velocity.single_mut().linvel.y = 5.0;
+        player_velocity.single_mut().linvel.y = 15.0;
     }
 
     if let Ok(mut controller) = controller_query.get_single_mut() {
