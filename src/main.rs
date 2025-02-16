@@ -2,7 +2,7 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::scene::ron::de;
 use bevy::window::{CursorGrabMode, CursorOptions};
-use bevy_demo::{block_provider, cubePlain, customMaterial, player, region};
+use bevy_demo::{block_provider, cubePlain, customMaterial, npc, player, region};
 use bevy_rapier3d::prelude::*;
 use smooth_bevy_cameras::LookTransformPlugin;
 
@@ -21,7 +21,7 @@ fn main() {
             Startup,
             (
                 player::setup,
-                // cubePlain::setup,
+                npc::setup,
                 region::startup,
                 block_provider::setup,
             ),
@@ -33,9 +33,7 @@ fn main() {
                 player::handle_mouse_motion,
                 player::handle_camera,
                 player::del_bullet,
-                // cubePlain::handle_keyboard_controls,
-                // cubePlain::handle_mouse_motion,
-                // cubePlain::handle_camera,
+                npc::handle_keyboard_controls,
                 region::region_update,
                 grab_mouse,
             ),

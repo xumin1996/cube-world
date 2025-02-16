@@ -172,7 +172,7 @@ pub fn handle_keyboard_controls(
     keyboard: Res<ButtonInput<KeyCode>>,
     camera_look_at: Res<CameraLookAt>,
     time: Res<Time>,
-    mut controller_query: Query<&mut KinematicCharacterController>,
+    mut controller_query: Query<&mut KinematicCharacterController, With<Player>>,
     mut player_velocity: Query<&mut Velocity, With<Player>>,
 ) {
     let mut look_direction = camera_look_at.look_at.normalize();
