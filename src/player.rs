@@ -29,7 +29,7 @@ pub struct PrintTimer(Timer);
 
 #[derive(Component, Debug)]
 pub struct Bullet {
-    live_time: Timer
+    live_time: Timer,
 }
 
 const collider_player: Group = Group::GROUP_1;
@@ -58,7 +58,7 @@ pub fn setup(
         },
         LockedAxes::ROTATION_LOCKED,
         RigidBody::Dynamic,
-        Collider::cuboid(0.5, 0.5, 0.5),
+        Collider::ball(0.5),
         GravityScale(4.0),
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
@@ -137,7 +137,9 @@ pub fn handle_mouse_motion(
             key_cool_timer.reset();
 
             commands.spawn((
-                Bullet {live_time:Timer::from_seconds(3.0, TimerMode::Once)},
+                Bullet {
+                    live_time: Timer::from_seconds(10.0, TimerMode::Once),
+                },
                 Mesh3d(obj_mesh.primitives[0].mesh.clone()),
                 MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
                 // Mesh3d(meshes.add(Sphere::new(1.0))),
@@ -220,8 +222,12 @@ pub fn handle_camera(
     lt.target = player_position.translation;
 }
 
-pub fn del_bullet(time: Res<Time>, mut commands: Commands, mut bullets: Query<(Entity, &mut Bullet), With<Bullet>>) {
-    for (entity, mut bullet) in  bullets.iter_mut() {
+pub fn del_bullet(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut bullets: Query<(Entity, &mut Bullet), With<Bullet>>,
+) {
+    for (entity, mut bullet) in bullets.iter_mut() {
         bullet.live_time.tick(time.delta());
         if bullet.live_time.finished() {
             commands.entity(entity).despawn();

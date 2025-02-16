@@ -81,8 +81,8 @@ pub fn region_update(
     gltf_mesh_asset: Res<Assets<GltfMesh>>,
     asset_server: Res<AssetServer>,
 ) {
-    let view_circle = 4;
-    let rigid_circle = 3;
+    let view_circle = 8;
+    let rigid_circle = 4;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
     let player_region_y = player_position_query.single().translation.y as i32 / 16;
@@ -133,23 +133,20 @@ pub fn region_update(
         let metallic_roughness_texture: Handle<Image> =
             asset_server.load("textures/grass_block_top_mr.png");
 
+        // 创建 PBR 材质
+        let material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.749020, 0.643137, 0.450980),
+            base_color_texture: Some(base_color_texture.clone()),
+            normal_map_texture: Some(normal_texture.clone()),
+            metallic: 1.0,
+            perceptual_roughness: 1.0,
+            metallic_roughness_texture: Some(metallic_roughness_texture.clone()),
+            ..default()
+        });
+
         // let cube_material = materials.add(Color::WHITE);
         for region_x in player_region_x - view_circle..=player_region_x + view_circle {
             for region_z in player_region_z - view_circle..=player_region_z + view_circle {
-                // 创建texture
-                // let color_texture = color_textures.add(create_texture(region_x, region_z));
-
-                // 创建 PBR 材质
-                let material = materials.add(StandardMaterial {
-                    base_color: Color::srgb(0.749020, 0.643137, 0.450980),
-                    base_color_texture: Some(base_color_texture.clone()),
-                    normal_map_texture: Some(normal_texture.clone()),
-                    metallic: 1.0,
-                    perceptual_roughness: 1.0,
-                    metallic_roughness_texture: Some(metallic_roughness_texture.clone()),
-                    ..default()
-                });
-
                 // 检查是否已经存在
                 let fit_num = view_region_list
                     .iter()
