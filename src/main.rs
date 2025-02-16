@@ -2,7 +2,7 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::scene::ron::de;
 use bevy::window::{CursorGrabMode, CursorOptions};
-use bevy_demo::{cubePlain, customMaterial, player, region};
+use bevy_demo::{block_provider, cubePlain, customMaterial, player, region};
 use bevy_rapier3d::prelude::*;
 use smooth_bevy_cameras::LookTransformPlugin;
 
@@ -23,6 +23,7 @@ fn main() {
                 player::setup,
                 // cubePlain::setup,
                 region::startup,
+                block_provider::setup,
             ),
         )
         .add_systems(
