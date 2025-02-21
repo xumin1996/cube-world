@@ -18,6 +18,31 @@ impl MapGenerator for NormalGenerator {
     fn generate_block(&self, region_x: i32, region_y: i32, region_z: i32) -> Mesh {
         region_by_block(region_x, region_z)
     }
+    fn generate_height_map(&self, region_x: i32, region_y: i32, region_z: i32) -> Vec<Vec<f32>> {
+        height_map_by_region(region_x, 0, region_z)
+    }
+}
+
+fn height_map_by_region(region_x: i32, region_y: i32, region_z: i32) -> Vec<Vec<f32>> {
+    let plain_size = 16i32;
+    // [x1,x1,x1,...,x2,x2,x2,...,x3,x3,x3,....xy, xy,xy,...]
+    let (heights, min, max) = NoiseBuilder::fbm_2d_offset(
+        (region_z * plain_size) as f32,
+        (plain_size) as usize,
+        (region_x * plain_size) as f32,
+        (plain_size) as usize,
+    )
+    .with_seed(1)
+    .generate();
+    let heights: Vec<f32> = heights.iter().map(|item| (item * 100f32).floor()).collect();
+    let plain_height: Vec<Vec<f32>> = heights
+        .chunks((plain_size) as usize)
+        .map(|chunk| {
+            let mut rv = chunk.to_vec();
+            rv
+        })
+        .collect();
+    return plain_height;
 }
 
 fn region_by_block(region_x: i32, region_z: i32) -> Mesh {

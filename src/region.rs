@@ -83,7 +83,7 @@ pub fn region_update(
     asset_server: Res<AssetServer>,
     map_generator_info_query: Query<&MapGeneratorInfo>,
 ) {
-    let view_circle = 8;
+    let view_circle = 7;
     let rigid_circle = 4;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
@@ -156,7 +156,9 @@ pub fn region_update(
                     .count();
 
                 if fit_num == 0 {
-                    let region_mesh: Mesh = map_generator_info_query.single().region_generate(region_x, 0, region_z);
+                    let region_mesh: Mesh = map_generator_info_query
+                        .single()
+                        .region_generate(region_x, 0, region_z);
 
                     // 区块偏移
                     let plain_size = 16i32;
@@ -195,31 +197,45 @@ pub fn region_update(
                 .filter(|v| v.block_x == region_x && v.block_z == region_z)
                 .count();
             if fit_num == 0 {
-                let start = Instant::now();
-                let t: &MapGeneratorInfo = map_generator_info_query.single();
-                let plain_mesh = map_generator_info_query.single().region_generate(region_x, 0, region_z);
-                println!("get_mesh time: {}", (Instant::now() - start).as_secs_f32());
+                // 方块地图
+                // let start = Instant::now();
+                // let plain_mesh = map_generator_info_query
+                //     .single()
+                //     .region_generate(region_x, 0, region_z);
+                // println!("get_mesh time: {}", (Instant::now() - start).as_secs_f32());
 
-                let plain_tri = Triangle::from_mesh(&plain_mesh);
-                let plain_indices = (0..plain_tri.points.len())
-                    .into_iter()
-                    .map(|n| n as u32)
-                    .collect::<Vec<u32>>()
-                    .chunks(3)
-                    .map(|vs| [vs[0], vs[1], vs[2]])
-                    .collect();
-                println!("plain_tri time: {}", (Instant::now() - start).as_secs_f32());
+                // let plain_tri = Triangle::from_mesh(&plain_mesh);
+                // let plain_indices = (0..plain_tri.points.len())
+                //     .into_iter()
+                //     .map(|n| n as u32)
+                //     .collect::<Vec<u32>>()
+                //     .chunks(3)
+                //     .map(|vs| [vs[0], vs[1], vs[2]])
+                //     .collect();
+                // println!("plain_tri time: {}", (Instant::now() - start).as_secs_f32());
 
-                let start = Instant::now();
-                let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
-                println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
+                // let start = Instant::now();
+                // let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
+                // println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
+
+                let height_map = map_generator_info_query
+                    .single()
+                    .height_map(region_x, 0, region_z);
+                let heights = height_map.into_iter().flatten().collect::<Vec<f32>>();
+                let plain_size = 16;
+                let height_map_collider = Collider::heightfield(
+                    heights,
+                    plain_size as usize,
+                    plain_size as usize,
+                    Vec3::new(plain_size as f32, 1.0, plain_size as f32),
+                );
 
                 // 区块偏移
                 let plain_size = 16i32;
                 let region_transform = Transform::from_xyz(
-                    region_x as f32 * plain_size as f32,
-                    0f32,
-                    region_z as f32 * plain_size as f32,
+                    region_x as f32 * plain_size as f32 + (plain_size as f32 / 2.0) - 0.5f32,
+                    0.5f32,
+                    region_z as f32 * plain_size as f32 + (plain_size as f32 / 2.0) - 0.5f32,
                 );
 
                 let start = Instant::now();
@@ -230,7 +246,8 @@ pub fn region_update(
                         block_z: region_z,
                     },
                     RigidBody::Fixed,
-                    trimesh,
+                    // trimesh,
+                    height_map_collider,
                     // CollisionGroups::new(collider_ground, collider_player | collider_ball ),
                     region_transform,
                 ));
@@ -301,9 +318,10 @@ fn create_texture(region_x: i32, region_z: i32) -> Image {
         NoiseBuilder::fbm_2d_offset((region_x * size) as f32, 128, (region_z * size) as f32, 128)
             .with_seed(1)
             .generate();
-        let noise_texture = heights.iter()
-            .map(|x| (x * 255.0) as u8)
-            .collect::<Vec<u8>>();
+    let noise_texture = heights
+        .iter()
+        .map(|x| (x * 255.0) as u8)
+        .collect::<Vec<u8>>();
 
     Image::new_fill(
         Extent3d {
