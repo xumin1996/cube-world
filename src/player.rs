@@ -232,7 +232,6 @@ pub fn del_bullet(
         bullet.live_time.tick(time.delta());
         if bullet.live_time.finished() {
             commands.entity(entity).despawn();
-            Explos
         }
     }
 }
