@@ -157,6 +157,7 @@ pub fn handle_mouse_motion(
                     linvel: camera_transform.translation,
                     angvel: Vec3::ZERO,
                 },
+                Ccd::enabled(),
                 // CollisionGroups::new(collider_ball, collider_ground),
             ));
         }
