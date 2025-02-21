@@ -50,6 +50,7 @@ pub fn setup(
         Npc {
             towards: Vec3::ZERO,
         },
+        Ccd::enabled(),
         Velocity::zero(),
         // CollisionGroups::new(collider_player, collider_ground),
     ));

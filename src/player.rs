@@ -86,7 +86,7 @@ pub fn setup(
     commands.insert_resource(MyAssetPacket(pokeball_handle));
 
     // 按键冷却时间
-    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.1, TimerMode::Once)));
+    commands.spawn(KeyCooldownTimer(Timer::from_seconds(0.02, TimerMode::Once)));
     commands.spawn(PrintTimer(Timer::from_seconds(1.0, TimerMode::Once)));
 }
 
@@ -232,6 +232,7 @@ pub fn del_bullet(
         bullet.live_time.tick(time.delta());
         if bullet.live_time.finished() {
             commands.entity(entity).despawn();
+            Explos
         }
     }
 }
