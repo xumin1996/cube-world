@@ -66,6 +66,7 @@ pub fn setup(
         Transform::from_xyz(0.0, 10.0, 0.0),
         Player,
         Velocity::zero(),
+        Ccd::enabled(),
         // CollisionGroups::new(collider_player, collider_ground),
     ));
 

@@ -83,7 +83,7 @@ pub fn region_update(
     asset_server: Res<AssetServer>,
     map_generator_info_query: Query<&MapGeneratorInfo>,
 ) {
-    let view_circle = 7;
+    let view_circle = 9;
     let rigid_circle = 4;
     // 角色所在区块
     let player_region_x = player_position_query.single().translation.x as i32 / 16;
