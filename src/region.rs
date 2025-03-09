@@ -130,7 +130,7 @@ pub fn region_update(
         .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
     {
         // 加载 PBR 贴图
-        let base_color_texture: Handle<Image> = asset_server.load("textures/grass_block_top.png");
+        let base_color_texture: Handle<Image> = asset_server.load("textures/old.png");
         let normal_texture: Handle<Image> = asset_server.load("textures/grass_block_top_n.png");
         let metallic_roughness_texture: Handle<Image> =
             asset_server.load("textures/grass_block_top_mr.png");
@@ -139,10 +139,10 @@ pub fn region_update(
         let material: Handle<StandardMaterial> = materials.add(StandardMaterial {
             base_color: Color::srgb(0.749020, 0.643137, 0.450980),
             base_color_texture: Some(base_color_texture.clone()),
-            normal_map_texture: Some(normal_texture.clone()),
+            // normal_map_texture: Some(normal_texture.clone()),
             metallic: 1.0,
             perceptual_roughness: 1.0,
-            metallic_roughness_texture: Some(metallic_roughness_texture.clone()),
+            // metallic_roughness_texture: Some(metallic_roughness_texture.clone()),
             ..default()
         });
 

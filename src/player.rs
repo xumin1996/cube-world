@@ -48,7 +48,7 @@ pub fn setup(
             // up: Vec3::Y,
             apply_impulse_to_dynamic_bodies: true,
             offset: CharacterLength::Absolute(0.1),
-            snap_to_ground: Some(CharacterLength::Absolute(1.0)),
+            // snap_to_ground: Some(CharacterLength::Absolute(1.0)),
             autostep: Some(CharacterAutostep {
                 max_height: CharacterLength::Absolute(1.5),
                 min_width: CharacterLength::Absolute(0.6),

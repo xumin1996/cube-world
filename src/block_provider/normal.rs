@@ -33,8 +33,9 @@ fn height_map_by_region(region_x: i32, region_y: i32, region_z: i32) -> Vec<Vec<
         (plain_size) as usize,
     )
     .with_seed(1)
+    .with_freq(0.01)
     .generate();
-    let heights: Vec<f32> = heights.iter().map(|item| (item * 100f32).floor()).collect();
+    let heights: Vec<f32> = heights.iter().map(|item| (item * 200f32).floor()).collect();
     let plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size) as usize)
         .map(|chunk| {
@@ -70,8 +71,9 @@ fn get_map_height(region_x: i32, region_z: i32) -> Vec<Vec<f32>> {
         (plain_size + 1) as usize,
     )
     .with_seed(1)
+    .with_freq(0.01)
     .generate();
-    let heights: Vec<f32> = heights.iter().map(|item| (item * 100f32).floor()).collect();
+    let heights: Vec<f32> = heights.iter().map(|item| (item * 200f32).floor()).collect();
     let plain_height: Vec<Vec<f32>> = heights
         .chunks((plain_size + 1) as usize)
         .map(|chunk| {
