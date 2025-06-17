@@ -120,53 +120,58 @@ pub fn handle_mouse_motion(
         camera_transform.translation.z,
     );
 
-    player_position_query
-        .single_mut()
-        .rotate_local_y(-displacement / 500.);
+    if let Ok(mut player_position) = player_position_query.single_mut() {
+        player_position.rotate_local_y(-displacement / 500.);
+        if let Ok(mut key_cool_timer) = key_cool_timer_query.single_mut() {
+            // 鼠标
+            let key_cool_timer = &mut key_cool_timer.0;
+            key_cool_timer.tick(time.delta());
+            if mouse.pressed(MouseButton::Left) && key_cool_timer.finished() {
+                if let Some(obj_mesh) = gltf_asset
+                    .get(&my_asset_packet.0)
+                    .and_then(|gltf| {
+                        gltf_node_asset.get(&gltf.named_nodes["SM_Pokeball_M_Pokeball_0"])
+                    })
+                    .and_then(|floor_dirt| floor_dirt.mesh.as_ref())
+                    .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
+                {
+                    // 重置冷却时间
+                    key_cool_timer.reset();
 
-    // 鼠标
-    let key_cool_timer = &mut key_cool_timer_query.single_mut().0;
-    key_cool_timer.tick(time.delta());
-    if mouse.pressed(MouseButton::Left) && key_cool_timer.finished() {
-        if let Some(obj_mesh) = gltf_asset
-            .get(&my_asset_packet.0)
-            .and_then(|gltf| gltf_node_asset.get(&gltf.named_nodes["SM_Pokeball_M_Pokeball_0"]))
-            .and_then(|floor_dirt| floor_dirt.mesh.as_ref())
-            .and_then(|floor_mesh_handle| gltf_mesh_asset.get(floor_mesh_handle))
-        {
-            // 重置冷却时间
-            key_cool_timer.reset();
-
-            commands.spawn((
-                Bullet {
-                    live_time: Timer::from_seconds(10.0, TimerMode::Once),
-                },
-                Mesh3d(obj_mesh.primitives[0].mesh.clone()),
-                MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
-                // Mesh3d(meshes.add(Sphere::new(1.0))),
-                // MeshMaterial3d(materials.add(Color::WHITE)),
-                RigidBody::Dynamic,
-                Collider::ball(1.0),
-                // ColliderConstructor::ConvexHullFromMesh,
-                GravityScale(1.0),
-                Transform::from_translation(
-                    player_position_query.single().translation.clone() + Vec3::new(0.0, 2.0, 0.0),
-                )
-                .with_scale(Vec3::new(0.2, 0.2, 0.2)),
-                Velocity {
-                    linvel: camera_transform.translation,
-                    angvel: Vec3::ZERO,
-                },
-                Ccd::enabled(),
-                // CollisionGroups::new(collider_ball, collider_ground),
-            ));
+                    commands.spawn((
+                        Bullet {
+                            live_time: Timer::from_seconds(10.0, TimerMode::Once),
+                        },
+                        Mesh3d(obj_mesh.primitives[0].mesh.clone()),
+                        MeshMaterial3d(obj_mesh.primitives[0].material.clone().unwrap()),
+                        // Mesh3d(meshes.add(Sphere::new(1.0))),
+                        // MeshMaterial3d(materials.add(Color::WHITE)),
+                        RigidBody::Dynamic,
+                        Collider::ball(1.0),
+                        // ColliderConstructor::ConvexHullFromMesh,
+                        GravityScale(1.0),
+                        Transform::from_translation(
+                            player_position.translation.clone() + Vec3::new(0.0, 2.0, 0.0),
+                        )
+                        .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+                        Velocity {
+                            linvel: camera_transform.translation,
+                            angvel: Vec3::ZERO,
+                        },
+                        Ccd::enabled(),
+                        // CollisionGroups::new(collider_ball, collider_ground),
+                    ));
+                }
+            }
         }
     }
 
-    print_timer_query.single_mut().0.tick(time.delta());
-    if print_timer_query.single_mut().0.finished() {
-        // println!("bullet number: {}", bullet_query.iter().len());
-        print_timer_query.single_mut().0.reset();
+    if let Ok(mut print_timer) = print_timer_query.single_mut() {
+        print_timer.0.tick(time.delta());
+        if print_timer.0.finished() {
+            // println!("bullet number: {}", bullet_query.iter().len());
+            print_timer.0.reset();
+        }
     }
 }
 
@@ -175,7 +180,7 @@ pub fn handle_keyboard_controls(
     camera_look_at: Res<CameraLookAt>,
     time: Res<Time>,
     mut controller_query: Query<&mut KinematicCharacterController, With<Player>>,
-    mut player_velocity: Query<&mut Velocity, With<Player>>,
+    mut player_velocity_query: Query<&mut Velocity, With<Player>>,
 ) {
     let mut look_direction = camera_look_at.look_at.normalize();
     look_direction.y = 0.0;
@@ -202,10 +207,12 @@ pub fn handle_keyboard_controls(
 
     // 跳跃
     if keyboard.pressed(KeyCode::Space) {
-        player_velocity.single_mut().linvel.y = 15.0;
+        if let Ok(mut player_velocity) = player_velocity_query.single_mut() {
+            player_velocity.linvel.y = 15.0;
+        }
     }
 
-    if let Ok(mut controller) = controller_query.get_single_mut() {
+    if let Ok(mut controller) = controller_query.single_mut() {
         controller.translation = Some(direc);
     };
 }
@@ -216,12 +223,13 @@ pub fn handle_camera(
     mut look_transform_query: Query<&mut LookTransform>,
 ) {
     // 更新摄像机位置
-    let Ok(mut lt) = look_transform_query.get_single_mut() else {
+    let Ok(mut lt) = look_transform_query.single_mut() else {
         return;
     };
-    let player_position: &Transform = player_position_query.single();
-    lt.eye = player_position.translation - camera_look_at.look_at;
-    lt.target = player_position.translation;
+    if let Ok(player_position) = player_position_query.single() {
+        lt.eye = player_position.translation - camera_look_at.look_at;
+        lt.target = player_position.translation;
+    }
 }
 
 pub fn del_bullet(

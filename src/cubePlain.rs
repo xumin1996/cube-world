@@ -1,6 +1,6 @@
-use bevy_rapier3d::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 use smooth_bevy_cameras::{LookTransform, Smoother};
 
 #[derive(Component)]
@@ -79,7 +79,7 @@ pub fn handle_keyboard_controls(
     if keyboard.pressed(KeyCode::KeyD) {
         direction += look_direction_rotation;
     }
-    
+
     // let mut velocity: Mut<'_, LinearVelocity> = lv_query.single_mut();
     // velocity.x = direction.x * 40.0;
     // // velocity.y = look_direction.y;
@@ -92,10 +92,11 @@ pub fn handle_camera(
     mut look_transform_query: Query<&mut LookTransform>,
 ) {
     // 更新摄像机位置
-    let Ok(mut lt) = look_transform_query.get_single_mut() else {
+    let Ok(mut lt) = look_transform_query.single_mut() else {
         return;
     };
-    let cube_plain_position: &Transform = cube_plain_position_query.single();
-    lt.eye = cube_plain_position.translation - camera_look_at.look_at;
-    lt.target = cube_plain_position.translation;
+    if let Ok(cube_plain_position) = cube_plain_position_query.single() {
+        lt.eye = cube_plain_position.translation - camera_look_at.look_at;
+        lt.target = cube_plain_position.translation;
+    }
 }

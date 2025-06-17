@@ -64,24 +64,25 @@ pub fn handle_keyboard_controls(
     mut rotate_timer_query: Query<&mut RotateTimer>,
     mut controller_query: Query<(&mut KinematicCharacterController, &mut Npc), With<Npc>>,
 ) {
-    rotate_timer_query.single_mut().0.tick(time.delta());
+    if let Ok(mut rotate_timer) = rotate_timer_query.single_mut() {
+        rotate_timer.0.tick(time.delta());
+        if let Ok((mut controller, mut npc)) = controller_query.single_mut() {
+            if rotate_timer.0.finished() {
+                rotate_timer.0.reset();
 
-    if let Ok((mut controller, mut npc)) = controller_query.get_single_mut() {
-        if rotate_timer_query.single_mut().0.finished() {
-            rotate_timer_query.single_mut().0.reset();
+                // 确定随机方向
+                let mut rng = rand::thread_rng();
+                let rotation_quaternion =
+                    Quat::from_rotation_y(rng.gen::<f32>() * std::f32::consts::TAU);
+                let direction = rotation_quaternion.mul_vec3(Vec3::X.normalize() * 2.0);
 
-            // 确定随机方向
-            let mut rng = rand::thread_rng();
-            let rotation_quaternion =
-                Quat::from_rotation_y(rng.gen::<f32>() * std::f32::consts::TAU);
-            let direction = rotation_quaternion.mul_vec3(Vec3::X.normalize() * 2.0);
+                // 改变方向
+                println!("direction:{}", direction);
+                npc.towards = direction;
+            }
 
-            // 改变方向
-            println!("direction:{}", direction);
-            npc.towards = direction;
-        }
-
-        // 移动
-        controller.translation = Some(npc.towards * time.delta_secs());
-    };
+            // 移动
+            controller.translation = Some(npc.towards * time.delta_secs());
+        };
+    }
 }

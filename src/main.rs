@@ -13,7 +13,7 @@ fn main() {
             RapierPhysicsPlugin::<NoUserData>::default(),
             // RapierDebugRenderPlugin::default(),  // rapier碰撞调试
             LookTransformPlugin,
-            FrameTimeDiagnosticsPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
             LogDiagnosticsPlugin::default(),
             MaterialPlugin::<customMaterial::CustomMaterial>::default(),
         ))

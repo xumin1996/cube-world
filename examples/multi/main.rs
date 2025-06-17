@@ -4,11 +4,10 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use bevy_demo::util::Triangle;
 use bevy_obj::ObjPlugin;
 use core::f32;
 use rand::Rng;
-use bevy_demo::util::Triangle;
-
 
 fn main() {
     App::new()

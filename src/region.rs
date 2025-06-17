@@ -84,11 +84,17 @@ pub fn region_update(
     map_generator_info_query: Query<&MapGeneratorInfo>,
 ) {
     let view_circle = 9;
-    let rigid_circle = 4;
+    let rigid_circle = 6;
     // 角色所在区块
-    let player_region_x = player_position_query.single().translation.x as i32 / 16;
-    let player_region_y = player_position_query.single().translation.y as i32 / 16;
-    let player_region_z = player_position_query.single().translation.z as i32 / 16;
+    let player_position = match player_position_query.single() {
+        Ok(v) => v,
+        Err(e) => {
+            return;
+        }
+    };
+    let player_region_x = player_position.translation.x as i32 / 16;
+    let player_region_y = player_position.translation.y as i32 / 16;
+    let player_region_z = player_position.translation.z as i32 / 16;
 
     // 删除已有区块
     let mut view_region_list: Vec<&ViewRegion> = Vec::new();
@@ -156,9 +162,11 @@ pub fn region_update(
                     .count();
 
                 if fit_num == 0 {
-                    let region_mesh: Mesh = map_generator_info_query
-                        .single()
-                        .region_generate(region_x, 0, region_z);
+                    let map_generator_info = match map_generator_info_query.single() {
+                        Ok(v) => v,
+                        Err(e) => {return;}
+                    };
+                    let region_mesh = map_generator_info.region_generate(region_x, 0, region_z);
 
                     // 区块偏移
                     let plain_size = 16i32;
@@ -218,9 +226,11 @@ pub fn region_update(
                 // let trimesh = Collider::trimesh(plain_tri.points, plain_indices);
                 // println!("trimesh time: {}", (Instant::now() - start).as_secs_f32());
 
-                let height_map = map_generator_info_query
-                    .single()
-                    .height_map(region_x, 0, region_z);
+                let map_generator_info = match map_generator_info_query.single() {
+                    Ok(v) => v,
+                    Err(e) => {return;}
+                };
+                let height_map = map_generator_info.height_map(region_x, 0, region_z);
                 let heights = height_map.into_iter().flatten().collect::<Vec<f32>>();
                 let plain_size = 16;
                 let height_map_collider = Collider::heightfield(
