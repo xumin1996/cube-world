@@ -50,16 +50,16 @@ pub fn startup(
 
 pub fn handle_mouse_motion(
     mut mouse_motion_events: EventReader<MouseMotion>,
-    mut camera_transform: Query<&mut Transform, With<Camera>>,
+    mut camera_transform_query: Query<&mut Transform, With<Camera>>,
 ) {
     let displacement = mouse_motion_events
         .read()
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
 
     // 旋转
-    camera_transform
-        .single_mut()
-        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+    if let Ok(mut camera_transform) = camera_transform_query.single_mut() {
+        camera_transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+    }
 }
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]

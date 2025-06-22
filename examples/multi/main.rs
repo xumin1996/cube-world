@@ -1,3 +1,4 @@
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::input::mouse::MouseMotion;
 use bevy::{
     prelude::*,
@@ -11,7 +12,12 @@ use rand::Rng;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, ObjPlugin))
+        .add_plugins((
+            DefaultPlugins,
+            ObjPlugin,
+            FrameTimeDiagnosticsPlugin::default(),
+            LogDiagnosticsPlugin::default(),
+        ))
         .add_systems(Startup, startup)
         .add_systems(Update, handle_mouse_motion)
         .run();
@@ -39,7 +45,7 @@ pub fn startup(
 
     // 随机草地
     let mut rng = rand::thread_rng();
-    let offsets: Vec<Transform> = (0..10000)
+    let offsets: Vec<Transform> = (0..100_0000)
         .map(|i| {
             let offset_x = rng.gen_range(-0.5..0.5);
             let offset_z = rng.gen_range(-0.5..0.5);
@@ -48,7 +54,7 @@ pub fn startup(
                 .with_rotation(Quat::from_rotation_y(rotate))
         })
         .collect();
-    let ts = Triangle::pieces(5) * offsets;
+    let ts = Triangle::pieces(7) * offsets;
     commands.spawn((
         Mesh3d(meshes.add(ts.build())),
         MeshMaterial3d(materials.add(StandardMaterial {
@@ -76,14 +82,14 @@ pub fn startup(
 
 pub fn handle_mouse_motion(
     mut mouse_motion_events: EventReader<MouseMotion>,
-    mut camera_transform: Query<&mut Transform, With<Camera>>,
+    mut camera_transform_query: Query<&mut Transform, With<Camera>>,
 ) {
     let displacement = mouse_motion_events
         .read()
         .fold(0., |acc, mouse_motion| acc + mouse_motion.delta.x);
 
     // 旋转
-    camera_transform
-        .single_mut()
-        .rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+    if let Ok(mut camera_transform) = camera_transform_query.single_mut() {
+        camera_transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(-displacement / 700.));
+    }
 }
