@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Install musl toolchain
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libasound2-dev
     - name: Build Release
       run: cargo build --release --verbose
     - name: Run tests
@@ -31,6 +35,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y musl-tools
+        sudo apt-get install -y libasound2-dev
     - name: install musl
       run: |
         # 安装依赖
@@ -51,6 +56,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y mingw-w64
+        sudo apt-get install -y libasound2-dev
     - name: install musl
       run: |
         # 安装依赖
