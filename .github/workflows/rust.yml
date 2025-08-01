@@ -17,7 +17,7 @@ jobs:
     - name: Install musl toolchain
       run: |
         sudo apt-get update
-        sudo apt-get install -y libasound2-dev
+        sudo apt-get install -y libasound2-dev libudev-dev
     - name: Build Release
       run: cargo build --release --verbose
     - name: Run tests
@@ -34,8 +34,7 @@ jobs:
   #   - name: Install musl toolchain
   #     run: |
   #       sudo apt-get update
-  #       sudo apt-get install -y musl-tools
-  #       sudo apt-get install -y libasound2-dev
+  #       sudo apt-get install -y musl-tools musl-dev libudev-dev
   #   - name: install musl
   #     run: |
   #       # 安装依赖
