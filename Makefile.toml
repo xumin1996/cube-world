@@ -25,6 +25,13 @@ script = [
     "cp target/x86_64-pc-windows-gnu/release/cube-world.exe target/release/cube-world target/output"
 ]
 
+[tasks.bloat-release]
+description = "crate大小占用"
+script = [
+    "mkdir -p target/output",
+    "cargo bloat --release --crates > target/output/crate.txt"
+]
+
 [tasks.build-all]
 description = "编译所有平台"
-dependencies = ["clean", "build-release", "build-windows", "copy-to-output"]
+dependencies = ["clean", "build-release", "build-windows", "copy-to-output", "bloat-release"]
