@@ -503,18 +503,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_demo"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_obj",
- "bevy_rapier3d",
- "rand",
- "simdnoise",
- "smooth-bevy-cameras",
-]
-
-[[package]]
 name = "bevy_derive"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1840,6 +1828,18 @@ checksum = "90eeab0aa92f3f9b4e87f258c72b139c207d251f9cbc1080a0086b86a8870dd3"
 dependencies = [
  "nix",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "cube-world"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_obj",
+ "bevy_rapier3d",
+ "rand",
+ "simdnoise",
+ "smooth-bevy-cameras",
 ]
 
 [[package]]

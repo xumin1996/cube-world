@@ -2,8 +2,8 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::scene::ron::de;
 use bevy::window::{CursorGrabMode, CursorOptions};
-use bevy_demo::{block_provider, cubePlain, customMaterial, npc, player, region};
 use bevy_rapier3d::prelude::*;
+use cube_world::{block_provider, cubePlain, customMaterial, npc, player, region};
 use smooth_bevy_cameras::LookTransformPlugin;
 
 fn main() {

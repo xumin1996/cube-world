@@ -1,5 +1,5 @@
 [package]
-name = "bevy_demo"
+name = "cube-world"
 version = "0.1.0"
 edition = "2021"
 
